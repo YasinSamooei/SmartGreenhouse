@@ -1,0 +1,9 @@
+../Core/Modules/Src/dht22.c:10:13:debug	1
+../Core/Modules/Src/dht22.c:18:13:delay_us	2
+../Core/Modules/Src/dht22.c:25:13:Pin_Output	1
+../Core/Modules/Src/dht22.c:37:13:Pin_Input	1
+../Core/Modules/Src/dht22.c:48:13:DHT_Start	2
+../Core/Modules/Src/dht22.c:76:16:DHT_Response	5
+../Core/Modules/Src/dht22.c:113:16:DHT_ReadByte	7
+../Core/Modules/Src/dht22.c:162:9:DHT22_Read	4
+../Core/Modules/Src/dht22.c:208:6:DHT22_Init	1

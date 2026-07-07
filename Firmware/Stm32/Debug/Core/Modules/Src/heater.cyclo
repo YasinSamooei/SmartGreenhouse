@@ -1,0 +1,4 @@
+../Core/Modules/Src/heater.c:5:6:Heater_Init	1
+../Core/Modules/Src/heater.c:11:6:Heater_On	1
+../Core/Modules/Src/heater.c:17:6:Heater_Off	1
+../Core/Modules/Src/heater.c:23:9:Heater_IsRunning	1

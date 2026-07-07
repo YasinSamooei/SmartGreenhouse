@@ -1,0 +1,682 @@
+{% extends 'dashboard/admin/base.html' %}
+{% load static %}
+
+{% block title %}حذف گیاه{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ========================================
+       PLANT DELETE SPECIFIC STYLES
+       ======================================== */
+    .delete-container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px 0;
+    }
+
+    .delete-card {
+        background: var(--dark-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        overflow: hidden;
+        transition: var(--transition);
+        position: relative;
+    }
+
+    .delete-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--gradient-danger);
+    }
+
+    .delete-card:hover {
+        border-color: var(--danger);
+        box-shadow: 0 0 30px rgba(255, 23, 68, 0.1);
+    }
+
+    /* ========================================
+       HEADER
+       ======================================== */
+    .delete-header {
+        padding: 20px 24px 16px;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .delete-header .icon-wrapper {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: rgba(255, 23, 68, 0.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        color: var(--danger);
+        flex-shrink: 0;
+    }
+
+    .delete-header .title {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+
+    .delete-header .subtitle {
+        font-size: 13px;
+        color: var(--text-secondary);
+        margin-top: 2px;
+    }
+
+    /* ========================================
+       BODY
+       ======================================== */
+    .delete-body {
+        padding: 24px;
+    }
+
+    .warning-message {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        padding: 16px 20px;
+        background: rgba(255, 23, 68, 0.05);
+        border: 1px solid rgba(255, 23, 68, 0.2);
+        border-radius: var(--radius-sm);
+        margin-bottom: 24px;
+    }
+
+    .warning-message .warning-icon {
+        font-size: 22px;
+        color: var(--danger);
+        flex-shrink: 0;
+        margin-top: 2px;
+    }
+
+    .warning-message .warning-text {
+        color: var(--text-secondary);
+        font-size: 14px;
+        line-height: 1.7;
+    }
+
+    .warning-message .warning-text strong {
+        color: var(--danger);
+    }
+
+    /* Plant Info */
+    .plant-info {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        padding: 16px 20px;
+        background: var(--dark);
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border-color);
+        margin-bottom: 20px;
+    }
+
+    .plant-info-image {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid var(--border-color);
+        transition: var(--transition);
+        flex-shrink: 0;
+    }
+
+    .plant-info-image:hover {
+        border-color: var(--primary);
+        transform: scale(1.05);
+    }
+
+    .plant-info-details {
+        flex: 1;
+    }
+
+    .plant-info-details .plant-name {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 4px;
+    }
+
+    .plant-info-details .plant-id {
+        font-size: 13px;
+        color: var(--text-secondary);
+    }
+
+    .plant-info-details .plant-id strong {
+        color: var(--text-primary);
+    }
+
+    .plant-info-details .plant-meta {
+        display: flex;
+        gap: 16px;
+        margin-top: 6px;
+        flex-wrap: wrap;
+    }
+
+    .plant-info-details .meta-tag {
+        font-size: 12px;
+        padding: 2px 12px;
+        border-radius: 50px;
+        background: var(--dark-card);
+        border: 1px solid var(--border-color);
+        color: var(--text-secondary);
+    }
+
+    .plant-info-details .meta-tag i {
+        margin-left: 4px;
+    }
+
+    .plant-info-details .meta-tag.success {
+        color: var(--success);
+        border-color: rgba(0, 230, 118, 0.3);
+    }
+
+    .plant-info-details .meta-tag.danger {
+        color: var(--danger);
+        border-color: rgba(255, 23, 68, 0.3);
+    }
+
+    /* ========================================
+       CONFIRMATION CHECKBOX
+       ======================================== */
+    .confirmation-section {
+        padding: 16px 20px;
+        background: var(--dark);
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border-color);
+        margin-bottom: 20px;
+    }
+
+    .confirmation-label {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+        font-size: 14px;
+        color: var(--text-secondary);
+        transition: var(--transition);
+        user-select: none;
+    }
+
+    .confirmation-label:hover {
+        color: var(--text-primary);
+    }
+
+    .confirmation-label input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        accent-color: var(--danger);
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+
+    .confirmation-label .checkbox-text {
+        flex: 1;
+    }
+
+    .confirmation-label .checkbox-text strong {
+        color: var(--danger);
+    }
+
+    /* ========================================
+       ACTION BUTTONS
+       ======================================== */
+    .delete-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+        padding-top: 8px;
+        flex-wrap: wrap;
+    }
+
+    .btn-delete {
+        padding: 12px 32px;
+        border: none;
+        border-radius: var(--radius-sm);
+        font-family: inherit;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-delete i {
+        font-size: 16px;
+    }
+
+    .btn-delete.danger {
+        background: var(--gradient-danger);
+        color: white;
+    }
+
+    .btn-delete.danger:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 0 30px rgba(255, 23, 68, 0.3);
+    }
+
+    .btn-delete.danger:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .btn-delete.outline {
+        background: transparent;
+        border: 1px solid var(--border-color);
+        color: var(--text-secondary);
+    }
+
+    .btn-delete.outline:hover {
+        border-color: var(--primary);
+        color: var(--text-primary);
+        background: var(--dark);
+    }
+
+    /* ========================================
+       RESPONSIVE
+       ======================================== */
+    @media (max-width: 768px) {
+        .delete-container {
+            padding: 12px 0;
+        }
+
+        .delete-header {
+            padding: 16px 18px;
+        }
+
+        .delete-header .icon-wrapper {
+            width: 40px;
+            height: 40px;
+            font-size: 20px;
+        }
+
+        .delete-header .title {
+            font-size: 16px;
+        }
+
+        .delete-body {
+            padding: 18px;
+        }
+
+        .plant-info {
+            flex-direction: column;
+            text-align: center;
+            padding: 16px;
+        }
+
+        .plant-info-image {
+            width: 100px;
+            height: 100px;
+        }
+
+        .plant-info-details .plant-meta {
+            justify-content: center;
+        }
+
+        .warning-message {
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .delete-actions {
+            flex-direction: column;
+        }
+
+        .btn-delete {
+            justify-content: center;
+            padding: 10px 20px;
+        }
+
+        .confirmation-label {
+            font-size: 13px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .delete-header .title {
+            font-size: 14px;
+        }
+
+        .delete-body {
+            padding: 14px;
+        }
+
+        .plant-info-image {
+            width: 80px;
+            height: 80px;
+        }
+
+        .plant-info-details .plant-name {
+            font-size: 16px;
+        }
+
+        .warning-message .warning-text {
+            font-size: 13px;
+        }
+    }
+
+    /* ========================================
+       ANIMATIONS
+       ======================================== */
+    @keyframes shakeWarning {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-4px); }
+        75% { transform: translateX(4px); }
+    }
+
+    .warning-message .warning-icon {
+        animation: shakeWarning 2s ease-in-out infinite;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .delete-card {
+        animation: fadeInUp 0.4s ease both;
+    }
+
+    /* ========================================
+       LOADING SPINNER
+       ======================================== */
+    .spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: white;
+        animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    /* ========================================
+       GLOW EFFECT FOR DANGER BUTTON
+       ======================================== */
+    @keyframes glowPulse {
+        0%, 100% {
+            box-shadow: 0 0 20px rgba(255, 23, 68, 0.2);
+        }
+        50% {
+            box-shadow: 0 0 40px rgba(255, 23, 68, 0.4);
+        }
+    }
+
+    .btn-delete.danger:not(:disabled) {
+        animation: glowPulse 2s ease-in-out infinite;
+    }
+</style>
+{% endblock %}
+
+{% block main %}
+<div class="page-header">
+    <div class="header-content">
+        <h3 class="page-title">
+            <i class="fas fa-trash-alt page-icon" style="color: var(--danger);"></i>
+            حذف گیاه
+        </h3>
+        <div class="breadcrumb">
+            <a href="{% url 'panel:home' %}" class="breadcrumb-link">داشبورد</a>
+            <i class="fas fa-chevron-left"></i>
+            <a href="{% url 'panel:plant-list' %}" class="breadcrumb-link">لیست گیاهان</a>
+            <i class="fas fa-chevron-left"></i>
+            <span class="current">حذف</span>
+        </div>
+    </div>
+</div>
+
+<div class="delete-container">
+    <div class="delete-card">
+        <!-- Header -->
+        <div class="delete-header">
+            <div class="icon-wrapper">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div>
+                <div class="title">تأیید حذف گیاه</div>
+                <div class="subtitle">لطفاً قبل از حذف، اطلاعات را بررسی کنید</div>
+            </div>
+        </div>
+
+        <!-- Body -->
+        <form method="post" id="deleteForm">
+            {% csrf_token %}
+            <div class="delete-body">
+                <!-- Warning Message -->
+                <div class="warning-message">
+                    <div class="warning-icon">
+                        <i class="fas fa-exclamation-circle"></i>
+                    </div>
+                    <div class="warning-text">
+                        <strong>هشدار!</strong>
+                        با حذف این گیاه، تمام اطلاعات مربوط به آن از پایگاه داده حذف خواهد شد.
+                        این عمل <strong>غیرقابل بازگشت</strong> است.
+                    </div>
+                </div>
+
+                <!-- Plant Information -->
+                <div class="plant-info">
+                    <img src="{{ object.image.url }}" 
+                         alt="{{ object.name }}" 
+                         class="plant-info-image"
+                         loading="lazy">
+                    <div class="plant-info-details">
+                        <div class="plant-name">{{ object.name }}</div>
+                        <div class="plant-id">
+                            <strong>شناسه:</strong> #{{ object.pk }}
+                        </div>
+                        <div class="plant-meta">
+                            <span class="meta-tag">
+                                <i class="fas fa-calendar-alt"></i>
+                                {{ object.created|date:"Y/m/d" }}
+                            </span>
+                            <span class="meta-tag {% if object.healthy %}success{% else %}danger{% endif %}">
+                                <i class="fas {% if object.healthy %}fa-check-circle{% else %}fa-exclamation-circle{% endif %}"></i>
+                                {% if object.healthy %}سالم{% else %}بیمار{% endif %}
+                            </span>
+                            <span class="meta-tag">
+                                <i class="fas fa-percentage"></i>
+                                {{ object.accuracy }}%
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Confirmation Checkbox -->
+                <div class="confirmation-section">
+                    <label class="confirmation-label">
+                        <input type="checkbox" id="confirmCheck">
+                        <span class="checkbox-text">
+                            من تأیید می‌کنم که می‌خواهم گیاه <strong>{{ object.name }}</strong> را 
+                            به طور کامل حذف کنم.
+                        </span>
+                    </label>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="delete-actions">
+                    <a href="{% url 'panel:plant-list' %}" class="btn-delete outline">
+                        <i class="fas fa-arrow-right"></i>
+                        بازگشت
+                    </a>
+                    <button type="submit" 
+                            class="btn-delete danger" 
+                            id="deleteBtn" 
+                            disabled>
+                        <i class="fas fa-trash"></i>
+                        <span id="btnText">حذف گیاه</span>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // ========================================
+    // CONFIRMATION CHECKBOX
+    // ========================================
+    const confirmCheck = $('#confirmCheck');
+    const deleteBtn = $('#deleteBtn');
+    const btnText = $('#btnText');
+
+    confirmCheck.on('change', function() {
+        deleteBtn.prop('disabled', !this.checked);
+        
+        if (this.checked) {
+            deleteBtn.css('opacity', '1');
+            btnText.html('<i class="fas fa-trash"></i> تأیید و حذف');
+        } else {
+            deleteBtn.css('opacity', '0.5');
+            btnText.html('<i class="fas fa-trash"></i> حذف گیاه');
+        }
+    });
+
+    // ========================================
+    // FORM SUBMIT WITH LOADING STATE
+    // ========================================
+    $('#deleteForm').on('submit', function(e) {
+        e.preventDefault();
+
+        if (!confirmCheck.prop('checked')) {
+            showToast('لطفاً برای تأیید حذف، چک‌باکس را علامت بزنید.', 'warning');
+            return;
+        }
+
+        // Show loading state
+        deleteBtn.prop('disabled', true);
+        btnText.html('<span class="spinner"></span> در حال حذف...');
+
+        // Show confirmation toast
+        showToast('در حال حذف گیاه... لطفاً صبر کنید.', 'info');
+
+        // Submit the form after a small delay
+        setTimeout(() => {
+            this.submit();
+        }, 500);
+    });
+
+    // ========================================
+    // KEYBOARD SHORTCUTS
+    // ========================================
+    $(document).on('keydown', function(e) {
+        // Enter - submit (if checkbox is checked)
+        if (e.key === 'Enter' && !e.shiftKey) {
+            if (!$(e.target).is('input, textarea, button')) {
+                e.preventDefault();
+                if (confirmCheck.prop('checked')) {
+                    $('#deleteForm').submit();
+                } else {
+                    confirmCheck.focus();
+                    showToast('لطفاً ابتدا چک‌باکس تأیید را علامت بزنید.', 'warning');
+                }
+            }
+        }
+
+        // Escape - go back
+        if (e.key === 'Escape') {
+            if (!$(e.target).is('input, textarea')) {
+                e.preventDefault();
+                window.location.href = "{% url 'panel:plant-list' %}";
+            }
+        }
+
+        // C - toggle checkbox
+        if ((e.key === 'c' || e.key === 'C') && !e.ctrlKey && !e.metaKey) {
+            if (!$(e.target).is('input, textarea')) {
+                e.preventDefault();
+                confirmCheck.prop('checked', !confirmCheck.prop('checked'));
+                confirmCheck.trigger('change');
+            }
+        }
+    });
+
+    // ========================================
+    // MOUSE SHORTCUTS
+    // ========================================
+    // Double click on plant image to return
+    $('.plant-info-image').on('dblclick', function() {
+        window.location.href = "{% url 'panel:plant-list' %}";
+    });
+
+    // ========================================
+    // TOAST FUNCTION (if not already defined)
+    // ========================================
+    if (typeof showToast === 'undefined') {
+        window.showToast = function(message, type = 'info', duration = 4000) {
+            const container = document.getElementById('toastContainer') || createToastContainer();
+            
+            const icons = {
+                success: 'fa-check-circle',
+                error: 'fa-times-circle',
+                warning: 'fa-exclamation-triangle',
+                info: 'fa-info-circle'
+            };
+            
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.innerHTML = `
+                <i class="fas ${icons[type] || icons.info} toast-icon"></i>
+                <span class="toast-message">${message}</span>
+                <button class="toast-close">&times;</button>
+            `;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(20px)';
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, duration);
+            
+            toast.querySelector('.toast-close').addEventListener('click', function() {
+                toast.remove();
+            });
+        };
+    }
+
+    function createToastContainer() {
+        const container = document.createElement('div');
+        container.id = 'toastContainer';
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+        return container;
+    }
+
+    // ========================================
+    // LOGGING
+    // ========================================
+    console.log('✅ Plant Delete page initialized');
+    console.log(`🗑️ Plant: {{ object.name }} (ID: {{ object.pk }})`);
+});
+</script>
+{% endblock %}

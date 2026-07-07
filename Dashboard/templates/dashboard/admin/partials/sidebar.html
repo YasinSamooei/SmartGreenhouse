@@ -1,0 +1,75 @@
+{% load static %}
+<aside class="dashboard-sidebar" id="sidebar">
+    <nav class="sidebar-nav">
+        <ul class="nav-list">
+            <!-- Profile Section -->
+            {% if request.user.is_authenticated %}
+            <li class="nav-profile">
+                <div class="profile-card">
+                    <img src="{% static 'dashboard/images/avatar.png' %}" alt="Profile" class="profile-image">
+                    <div class="profile-info">
+                        <span class="profile-name">{{ request.user.username }}</span>
+                        <span class="profile-role">مدیر سیستم</span>
+                    </div>
+                    <span class="status-indicator online"></span>
+                </div>
+            </li>
+            {% endif %}
+
+            <!-- Dashboard Home -->
+            <li class="nav-item">
+                <a href="{% url 'panel:home' %}" class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+                    <i class="fas fa-home nav-icon"></i>
+                    <span class="nav-text">داشبورد</span>
+                </a>
+            </li>
+
+            <!-- Sensors Detection -->
+            <li class="nav-item">
+                <a href="{% url 'embedded:display-sensors-page' %}" class="nav-link">
+                    <i class="fas fa-temperature-high nav-icon"></i>
+                    <span class="nav-text">سنسورها</span>
+                    <span class="nav-badge">Live</span>
+                </a>
+            </li>
+
+            <!-- Plant Detection -->
+            <li class="nav-item">
+                <a href="{% url 'panel:plant-list' %}" class="nav-link">
+                    <i class="fas fa-leaf nav-icon"></i>
+                    <span class="nav-text">تشخیص گیاهان</span>
+                </a>
+            </li>
+
+            <!-- Live Detection -->
+            <li class="nav-item">
+                <a href="{% url 'plant:video_stream' %}" class="nav-link">
+                    <i class="fas fa-video nav-icon"></i>
+                    <span class="nav-text">تشخیص زنده</span>
+                    <span class="nav-badge pulse">●</span>
+                </a>
+            </li>
+
+            <!-- Divider -->
+            <li class="nav-divider"></li>
+
+            <!-- Settings -->
+            <li class="nav-item">
+                <a href="#" class="nav-link">
+                    <i class="fas fa-cog nav-icon"></i>
+                    <span class="nav-text">تنظیمات</span>
+                </a>
+            </li>
+
+            <!-- Logout -->
+            {% if request.user.is_authenticated %}
+            <li class="nav-item logout-item">
+                <a href="{% url 'panel:panel-logout' %}" class="nav-link text-danger">
+                    <i class="fas fa-sign-out-alt nav-icon"></i>
+                    <span class="nav-text">خروج</span>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+</aside>

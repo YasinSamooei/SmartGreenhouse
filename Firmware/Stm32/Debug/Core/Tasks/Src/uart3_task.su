@@ -1,0 +1,4 @@
+../Core/Tasks/Src/uart3_task.c:23:13:ProcessCompletePacket	304	static
+../Core/Tasks/Src/uart3_task.c:187:6:UART3_StartReceive	8	static
+../Core/Tasks/Src/uart3_task.c:192:6:HAL_UART_RxCpltCallback	16	static
+../Core/Tasks/Src/uart3_task.c:216:6:UART3_CheckAndProcess	8	static

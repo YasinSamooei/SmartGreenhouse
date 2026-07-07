@@ -1,0 +1,600 @@
+{% extends 'dashboard/admin/base.html' %}
+{% load static %}
+
+{% block title %}ورود به سیستم{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ========================================
+       LOGIN PAGE SPECIFIC STYLES
+       ======================================== */
+    
+    .login-container {
+        min-height: calc(100vh - 200px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 20px;
+    }
+
+    .login-card {
+        background: var(--dark-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 40px 48px;
+        max-width: 440px;
+        width: 100%;
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .login-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--gradient-primary);
+    }
+
+    .login-card:hover {
+        border-color: var(--primary);
+        box-shadow: var(--shadow-glow);
+    }
+
+    /* Logo Section */
+    .login-logo {
+        text-align: center;
+        margin-bottom: 32px;
+    }
+
+    .login-logo .logo-icon {
+        width: 64px;
+        height: 64px;
+        background: linear-gradient(135deg, #00e676, #00897b);
+        border-radius: 16px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 32px;
+        box-shadow: var(--glow-green);
+        margin-bottom: 12px;
+    }
+
+    .login-logo h2 {
+        font-size: 24px;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin-bottom: 4px;
+    }
+
+    .login-logo .logo-sub {
+        font-size: 13px;
+        color: var(--text-secondary);
+        font-weight: 300;
+    }
+
+    .login-logo .logo-sub .highlight {
+        color: var(--accent-green);
+        font-weight: 600;
+    }
+
+    /* Form Elements */
+    .login-form .form-group {
+        margin-bottom: 20px;
+    }
+
+    .login-form .form-group label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        margin-bottom: 6px;
+    }
+
+    .login-form .form-group .input-wrapper {
+        position: relative;
+    }
+
+    .login-form .form-group .input-wrapper .input-icon {
+        position: absolute;
+        right: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-dim);
+        font-size: 16px;
+        transition: var(--transition);
+        pointer-events: none;
+    }
+
+    .login-form .form-group .input-wrapper:focus-within .input-icon {
+        color: var(--primary-light);
+    }
+
+    .login-form .form-control {
+        width: 100%;
+        padding: 12px 44px 12px 16px;
+        background: var(--dark);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        color: var(--text-primary);
+        font-family: inherit;
+        font-size: 14px;
+        transition: var(--transition);
+    }
+
+    .login-form .form-control:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: var(--shadow-glow);
+    }
+
+    .login-form .form-control::placeholder {
+        color: var(--text-dim);
+    }
+
+    /* Remember Me */
+    .login-form .form-options {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .login-form .form-check {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        font-size: 13px;
+        color: var(--text-secondary);
+        transition: var(--transition);
+    }
+
+    .login-form .form-check:hover {
+        color: var(--text-primary);
+    }
+
+    .login-form .form-check input[type="checkbox"] {
+        width: 17px;
+        height: 17px;
+        accent-color: var(--primary);
+        cursor: pointer;
+    }
+
+    .login-form .forgot-link {
+        font-size: 13px;
+        color: var(--primary-light);
+        text-decoration: none;
+        transition: var(--transition);
+    }
+
+    .login-form .forgot-link:hover {
+        color: var(--primary);
+        text-decoration: underline;
+    }
+
+    /* Buttons */
+    .login-form .btn-group {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .login-form .btn {
+        flex: 1;
+        padding: 12px 24px;
+        border: none;
+        border-radius: var(--radius-sm);
+        font-family: inherit;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-width: 100px;
+    }
+
+    .login-form .btn-primary {
+        background: var(--gradient-primary);
+        color: white;
+    }
+
+    .login-form .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-glow);
+    }
+
+    .login-form .btn-primary:active {
+        transform: translateY(0);
+    }
+
+    .login-form .btn-secondary {
+        background: transparent;
+        border: 1px solid var(--border-color);
+        color: var(--text-secondary);
+    }
+
+    .login-form .btn-secondary:hover {
+        border-color: var(--primary);
+        color: var(--text-primary);
+        background: var(--dark);
+    }
+
+    /* Error Messages */
+    .login-form .error-message {
+        background: rgba(255, 23, 68, 0.1);
+        border: 1px solid rgba(255, 23, 68, 0.3);
+        border-radius: var(--radius-sm);
+        padding: 12px 16px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--accent-red);
+        font-size: 13px;
+    }
+
+    .login-form .error-message i {
+        font-size: 18px;
+    }
+
+    /* Divider */
+    .login-divider {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin: 24px 0;
+        color: var(--text-dim);
+        font-size: 12px;
+    }
+
+    .login-divider::before,
+    .login-divider::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: var(--border-color);
+    }
+
+    /* Register Link */
+    .login-register {
+        text-align: center;
+        margin-top: 20px;
+        font-size: 14px;
+        color: var(--text-secondary);
+    }
+
+    .login-register a {
+        color: var(--primary-light);
+        text-decoration: none;
+        font-weight: 600;
+        transition: var(--transition);
+    }
+
+    .login-register a:hover {
+        color: var(--primary);
+        text-decoration: underline;
+    }
+
+    /* Loading State */
+    .login-form .btn .spinner {
+        display: none;
+        width: 18px;
+        height: 18px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+
+    .login-form .btn.loading .spinner {
+        display: inline-block;
+    }
+
+    .login-form .btn.loading .btn-text {
+        opacity: 0.7;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    /* Responsive */
+    @media (max-width: 576px) {
+        .login-card {
+            padding: 28px 24px;
+        }
+
+        .login-logo .logo-icon {
+            width: 52px;
+            height: 52px;
+            font-size: 26px;
+        }
+
+        .login-logo h2 {
+            font-size: 20px;
+        }
+
+        .login-form .btn {
+            flex: 1 1 100%;
+        }
+
+        .login-form .form-options {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+    }
+
+    @media (max-width: 400px) {
+        .login-card {
+            padding: 20px 16px;
+        }
+
+        .login-form .form-control {
+            font-size: 13px;
+            padding: 10px 38px 10px 12px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block main %}
+<div class="login-container">
+    <div class="login-card">
+        <!-- Logo -->
+        <div class="login-logo">
+            <div class="logo-icon">🌿</div>
+            <h2>سیستم مدیریت گلخانه</h2>
+            <p class="logo-sub">
+                <span class="highlight">ورود</span> به پنل مدیریت
+            </p>
+        </div>
+
+        <!-- Form -->
+        <form class="login-form" method="post" action="{% url 'panel:panel-login' %}" id="loginForm">
+            {% csrf_token %}
+
+            <!-- Error Messages -->
+            {% if form.errors %}
+            <div class="error-message">
+                <i class="fas fa-exclamation-circle"></i>
+                <span>نام کاربری یا رمز عبور اشتباه است. لطفاً دوباره تلاش کنید.</span>
+            </div>
+            {% endif %}
+
+            {% if messages %}
+                {% for message in messages %}
+                <div class="error-message" style="border-color: rgba(0, 230, 118, 0.3); color: var(--accent-green);">
+                    <i class="fas fa-check-circle"></i>
+                    <span>{{ message }}</span>
+                </div>
+                {% endfor %}
+            {% endif %}
+
+            <!-- Username -->
+            <div class="form-group">
+                <label for="username">نام کاربری</label>
+                <div class="input-wrapper">
+                    <i class="fas fa-user input-icon"></i>
+                    <input type="text" 
+                           class="form-control" 
+                           id="username" 
+                           name="username"
+                           placeholder="نام کاربری خود را وارد کنید"
+                           autocomplete="username"
+                           required
+                           value="{{ request.POST.username }}">
+                </div>
+            </div>
+
+            <!-- Password -->
+            <div class="form-group">
+                <label for="password">رمز عبور</label>
+                <div class="input-wrapper">
+                    <i class="fas fa-lock input-icon"></i>
+                    <input type="password" 
+                           class="form-control" 
+                           id="password" 
+                           name="password"
+                           placeholder="رمز عبور خود را وارد کنید"
+                           autocomplete="current-password"
+                           required>
+                </div>
+            </div>
+
+            <!-- Options -->
+            <div class="form-options">
+                <label class="form-check">
+                    <input type="checkbox" name="remember" class="form-check-input">
+                    <span>مرا به خاطر بسپار</span>
+                </label>
+                <a href="#" class="forgot-link">رمز عبور را فراموش کرده‌اید؟</a>
+            </div>
+
+            <!-- Buttons -->
+            <div class="btn-group">
+                <button type="submit" class="btn btn-primary" id="loginBtn">
+                    <span class="spinner"></span>
+                    <span class="btn-text">
+                        <i class="fas fa-sign-in-alt"></i>
+                        ورود
+                    </span>
+                </button>
+                <a href="{% url 'panel:home' %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i>
+                    انصراف
+                </a>
+            </div>
+
+            <!-- Divider -->
+            <div class="login-divider">
+                <span>یا</span>
+            </div>
+
+            <!-- Register -->
+            <div class="login-register">
+                حساب کاربری ندارید؟
+                <!-- <a href="">ثبت نام کنید</a> -->
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // ========================================
+    // LOGIN FORM HANDLING
+    // ========================================
+    const loginForm = document.getElementById('loginForm');
+    const loginBtn = document.getElementById('loginBtn');
+
+    if (loginForm) {
+        loginForm.addEventListener('submit', function(e) {
+            // Show loading state
+            loginBtn.classList.add('loading');
+            loginBtn.disabled = true;
+            
+            // The form will submit normally
+            // Loading state will show until redirect
+        });
+
+        // Handle Enter key for form submission (already handled by browser)
+        // Additional validation
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+
+        // Remove error message on typing
+        usernameInput?.addEventListener('input', function() {
+            const error = document.querySelector('.error-message');
+            if (error) {
+                error.style.display = 'none';
+            }
+        });
+
+        passwordInput?.addEventListener('input', function() {
+            const error = document.querySelector('.error-message');
+            if (error) {
+                error.style.display = 'none';
+            }
+        });
+
+        // Focus on username field on page load
+        usernameInput?.focus();
+
+        // ========================================
+        // KEYBOARD SHORTCUTS
+        // ========================================
+        document.addEventListener('keydown', function(e) {
+            // Ctrl + Enter to submit
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault();
+                loginForm.dispatchEvent(new Event('submit'));
+            }
+        });
+
+        // ========================================
+        // REMEMBER ME FUNCTIONALITY
+        // ========================================
+        const rememberCheck = document.querySelector('input[name="remember"]');
+        const savedUsername = localStorage.getItem('greenhouse_username');
+        const savedRemember = localStorage.getItem('greenhouse_remember');
+
+        if (savedRemember === 'true' && savedUsername) {
+            if (usernameInput) {
+                usernameInput.value = savedUsername;
+            }
+            if (rememberCheck) {
+                rememberCheck.checked = true;
+            }
+        }
+
+        rememberCheck?.addEventListener('change', function() {
+            if (this.checked) {
+                localStorage.setItem('greenhouse_remember', 'true');
+                localStorage.setItem('greenhouse_username', usernameInput?.value || '');
+            } else {
+                localStorage.removeItem('greenhouse_remember');
+                localStorage.removeItem('greenhouse_username');
+            }
+        });
+
+        // Save username on input if remember is checked
+        usernameInput?.addEventListener('input', function() {
+            if (rememberCheck?.checked) {
+                localStorage.setItem('greenhouse_username', this.value);
+            }
+        });
+    }
+
+    // ========================================
+    // TOAST SYSTEM (if needed)
+    // ========================================
+    if (typeof showToast === 'undefined') {
+        window.showToast = function(message, type = 'info', duration = 4000) {
+            const container = document.getElementById('toastContainer') || createToastContainer();
+            
+            const icons = {
+                success: 'fa-check-circle',
+                error: 'fa-times-circle',
+                warning: 'fa-exclamation-triangle',
+                info: 'fa-info-circle'
+            };
+            
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.innerHTML = `
+                <i class="fas ${icons[type] || icons.info} toast-icon" 
+                   style="color:${type === 'success' ? 'var(--accent-green)' : 
+                                  type === 'error' ? 'var(--accent-red)' : 
+                                  type === 'warning' ? 'var(--accent-amber)' : 
+                                  'var(--accent-cyan)'}"></i>
+                <span class="toast-message">${message}</span>
+                <button class="toast-close">&times;</button>
+            `;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(20px)';
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, duration);
+            
+            toast.querySelector('.toast-close').addEventListener('click', function() {
+                toast.remove();
+            });
+        };
+    }
+
+    function createToastContainer() {
+        const container = document.createElement('div');
+        container.id = 'toastContainer';
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+        return container;
+    }
+
+    console.log('✅ Login page loaded');
+    
+    // Show welcome message if redirected from logout
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('logout') === 'success') {
+        showToast('با موفقیت خارج شدید', 'success');
+        // Remove param from URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+});
+</script>
+{% endblock %}

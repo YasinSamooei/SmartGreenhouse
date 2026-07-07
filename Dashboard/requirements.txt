@@ -1,0 +1,9 @@
+# Python 3.11 compatible dependencies for Smart Greenhouse Dashboard
+Django>=4.2.7
+requests>=2.32.5
+djangorestframework>=3.14.0
+numpy>=1.26.4
+opencv-python>=4.9.0.80
+torch>=2.12.1
+torchvision>=0.27.1
+pillow>=10.3.0

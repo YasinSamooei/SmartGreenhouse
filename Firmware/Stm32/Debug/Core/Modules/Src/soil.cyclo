@@ -1,0 +1,5 @@
+../Core/Modules/Src/soil.c:4:6:Soil_Init	1
+../Core/Modules/Src/soil.c:9:10:Soil_ReadRaw	1
+../Core/Modules/Src/soil.c:14:9:Soil_GetPercent	1
+../Core/Modules/Src/soil.c:27:6:Soil_ReadAll	1
+../Core/Modules/Src/soil.c:33:9:Soil_IsDry	2

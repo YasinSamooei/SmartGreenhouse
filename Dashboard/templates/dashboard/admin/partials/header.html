@@ -1,0 +1,94 @@
+{% load static %}
+<header class="dashboard-header">
+    <div class="header-container">
+        <!-- Logo -->
+        <div class="header-logo">
+            <a href="{% url 'panel:home' %}" class="logo-link">
+                <img src="{% static 'dashboard/images/logo.png' %}" alt="Logo" class="logo-img">
+                <span class="logo-text">پنل مدیریت</span>
+            </a>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="header-search">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" placeholder="جستجو..." class="search-input">
+        </div>
+
+        <!-- Right Actions -->
+        <div class="header-actions">
+            <!-- Fullscreen -->
+            <button class="action-btn" id="fullscreenToggle">
+                <i class="fas fa-expand"></i>
+            </button>
+
+            <!-- Notifications -->
+            <div class="notification-wrapper">
+                <button class="action-btn" id="notificationToggle">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge">3</span>
+                </button>
+                <div class="notification-dropdown" id="notificationDropdown">
+                    <div class="dropdown-header">
+                        <h6>اعلان‌ها</h6>
+                        <span class="mark-all">همه را خواندم</span>
+                    </div>
+                    <div class="notification-list">
+                        <div class="notification-item unread">
+                            <i class="fas fa-info-circle text-info"></i>
+                            <div class="notification-content">
+                                <p>سیستم با موفقیت بروزرسانی شد</p>
+                                <span class="notification-time">۵ دقیقه پیش</span>
+                            </div>
+                        </div>
+                        <div class="notification-item">
+                            <i class="fas fa-exclamation-triangle text-warning"></i>
+                            <div class="notification-content">
+                                <p>هشدار: دمای گلخانه بالا است</p>
+                                <span class="notification-time">۱۵ دقیقه پیش</span>
+                            </div>
+                        </div>
+                        <div class="notification-item">
+                            <i class="fas fa-check-circle text-success"></i>
+                            <div class="notification-content">
+                                <p>آبیاری خودکار شروع شد</p>
+                                <span class="notification-time">۳۰ دقیقه پیش</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dropdown-footer">
+                        <a href="#">مشاهده همه اعلان‌ها</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Profile -->
+            {% if request.user.is_authenticated %}
+            <div class="user-profile">
+                <button class="profile-btn" id="profileToggle">
+                    <img src="{% static 'dashboard/images/avatar.png' %}" alt="User" class="profile-avatar">
+                    <span class="profile-name">{{ request.user.username }}</span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="profile-dropdown" id="profileDropdown">
+                    <a href="#" class="dropdown-item">
+                        <i class="fas fa-user"></i> پروفایل
+                    </a>
+                    <a href="#" class="dropdown-item">
+                        <i class="fas fa-cog"></i> تنظیمات
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <a href="{% url 'panel:panel-logout' %}" class="dropdown-item text-danger">
+                        <i class="fas fa-sign-out-alt"></i> خروج
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Mobile Menu Toggle -->
+            <button class="mobile-menu-toggle" id="mobileMenuToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </div>
+</header>

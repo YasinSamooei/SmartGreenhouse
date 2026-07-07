@@ -1,0 +1,820 @@
+{% extends 'dashboard/admin/base.html' %}
+{% load static %}
+
+{% block title %}لیست گیاهان{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ========================================
+       PLANT LIST SPECIFIC STYLES
+       ======================================== */
+    .upload-section {
+        background: var(--dark-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 24px;
+        margin-bottom: 24px;
+        transition: var(--transition);
+    }
+
+    .upload-section:hover {
+        border-color: var(--primary);
+        box-shadow: var(--shadow-glow);
+    }
+
+    .upload-form {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .upload-form .file-input-wrapper {
+        position: relative;
+        flex: 1;
+        min-width: 200px;
+    }
+
+    .upload-form .file-input-wrapper input[type="file"] {
+        width: 100%;
+        padding: 12px 16px;
+        background: var(--dark);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        color: var(--text-primary);
+        font-family: inherit;
+        font-size: 14px;
+        cursor: pointer;
+        transition: var(--transition);
+    }
+
+    .upload-form .file-input-wrapper input[type="file"]:hover {
+        border-color: var(--primary);
+    }
+
+    .upload-form .file-input-wrapper input[type="file"]::file-selector-button {
+        padding: 8px 16px;
+        margin-left: 12px;
+        background: var(--primary);
+        border: none;
+        border-radius: var(--radius-sm);
+        color: white;
+        font-family: inherit;
+        cursor: pointer;
+        transition: var(--transition);
+    }
+
+    .upload-form .file-input-wrapper input[type="file"]::file-selector-button:hover {
+        background: var(--primary-dark);
+    }
+
+    .btn-detect {
+        padding: 12px 32px;
+        background: var(--gradient-primary);
+        color: white;
+        border: none;
+        border-radius: var(--radius-sm);
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        white-space: nowrap;
+    }
+
+    .btn-detect:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-glow);
+    }
+
+    .btn-detect:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .btn-detect i {
+        font-size: 18px;
+    }
+
+    /* ========================================
+       TABLE STYLES
+       ======================================== */
+    .table-container {
+        background: var(--dark-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        overflow: hidden;
+        transition: var(--transition);
+    }
+
+    .table-container:hover {
+        border-color: var(--primary);
+    }
+
+    .table-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 18px 24px;
+        border-bottom: 1px solid var(--border-color);
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .table-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+
+    .table-title i {
+        color: var(--primary);
+        font-size: 22px;
+    }
+
+    .table-badge {
+        padding: 4px 12px;
+        border-radius: 50px;
+        font-size: 12px;
+        font-weight: 600;
+        background: var(--primary);
+        color: white;
+    }
+
+    .table-wrapper {
+        overflow-x: auto;
+        padding: 0 4px;
+    }
+
+    .plant-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+    }
+
+    .plant-table thead {
+        background: var(--dark);
+    }
+
+    .plant-table th {
+        padding: 14px 16px;
+        text-align: right;
+        font-weight: 600;
+        color: var(--text-secondary);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 1px solid var(--border-color);
+        white-space: nowrap;
+    }
+
+    .plant-table td {
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--border-color);
+        vertical-align: middle;
+        color: var(--text-primary);
+    }
+
+    .plant-table tbody tr {
+        transition: var(--transition);
+    }
+
+    .plant-table tbody tr:hover {
+        background: rgba(108, 60, 225, 0.05);
+    }
+
+    .plant-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    /* Plant Image */
+    .plant-image {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid var(--border-color);
+        transition: var(--transition);
+    }
+
+    .plant-image:hover {
+        border-color: var(--primary);
+        transform: scale(1.1);
+    }
+
+    /* Status Indicators */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 12px;
+        border-radius: 50px;
+        font-size: 13px;
+        font-weight: 500;
+    }
+
+    .status-badge.healthy {
+        background: rgba(0, 230, 118, 0.15);
+        color: var(--success);
+    }
+
+    .status-badge.sick {
+        background: rgba(255, 23, 68, 0.15);
+        color: var(--danger);
+    }
+
+    .status-badge i {
+        font-size: 16px;
+    }
+
+    .problem-text {
+        font-size: 13px;
+        padding: 4px 12px;
+        border-radius: var(--radius-sm);
+        display: inline-block;
+    }
+
+    .problem-text.has-problem {
+        background: rgba(255, 23, 68, 0.1);
+        color: var(--danger);
+    }
+
+    .problem-text.no-problem {
+        background: rgba(0, 230, 118, 0.1);
+        color: var(--success);
+    }
+
+    /* Action Buttons */
+    .action-group {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+
+    .btn-action {
+        padding: 6px 14px;
+        border: none;
+        border-radius: var(--radius-sm);
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        text-decoration: none;
+    }
+
+    .btn-action i {
+        font-size: 14px;
+    }
+
+    .btn-action.danger {
+        background: rgba(255, 23, 68, 0.15);
+        color: var(--danger);
+    }
+
+    .btn-action.danger:hover {
+        background: var(--danger);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: var(--glow-red);
+    }
+
+    .btn-action.primary {
+        background: rgba(108, 60, 225, 0.15);
+        color: var(--primary);
+    }
+
+    .btn-action.primary:hover {
+        background: var(--primary);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-glow);
+    }
+
+    /* ========================================
+       PAGINATION
+       ======================================== */
+    .pagination-wrapper {
+        padding: 18px 24px;
+        border-top: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .pagination-info {
+        font-size: 13px;
+        color: var(--text-secondary);
+    }
+
+    .pagination-info strong {
+        color: var(--text-primary);
+    }
+
+    .pagination {
+        display: flex;
+        gap: 4px;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .pagination .page-item {
+        display: inline-block;
+    }
+
+    .pagination .page-link {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 36px;
+        height: 36px;
+        padding: 0 12px;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        background: transparent;
+        color: var(--text-secondary);
+        font-size: 13px;
+        cursor: pointer;
+        transition: var(--transition);
+        text-decoration: none;
+        font-family: inherit;
+    }
+
+    .pagination .page-link:hover {
+        background: var(--dark);
+        border-color: var(--primary);
+        color: var(--text-primary);
+    }
+
+    .pagination .page-item.active .page-link {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: white;
+        box-shadow: var(--shadow-glow);
+    }
+
+    .pagination .page-item.disabled .page-link {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+
+    /* ========================================
+       EMPTY STATE
+       ======================================== */
+    .empty-state {
+        text-align: center;
+        padding: 48px 24px;
+    }
+
+    .empty-state i {
+        font-size: 64px;
+        color: var(--text-muted);
+        margin-bottom: 16px;
+    }
+
+    .empty-state h4 {
+        font-size: 20px;
+        color: var(--text-secondary);
+        margin-bottom: 8px;
+    }
+
+    .empty-state p {
+        color: var(--text-muted);
+        font-size: 14px;
+    }
+
+    /* ========================================
+       RESPONSIVE
+       ======================================== */
+    @media (max-width: 992px) {
+        .upload-form {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .btn-detect {
+            justify-content: center;
+        }
+
+        .table-header {
+            flex-direction: column;
+            align-items: stretch;
+            text-align: center;
+        }
+
+        .table-title {
+            justify-content: center;
+        }
+
+        .pagination-wrapper {
+            flex-direction: column;
+            text-align: center;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .upload-section {
+            padding: 16px;
+        }
+
+        .plant-table th,
+        .plant-table td {
+            padding: 10px 12px;
+            font-size: 13px;
+        }
+
+        .action-group {
+            flex-direction: column;
+        }
+
+        .btn-action {
+            justify-content: center;
+        }
+
+        .plant-image {
+            width: 40px;
+            height: 40px;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .upload-section {
+            padding: 12px;
+        }
+
+        .plant-table {
+            font-size: 12px;
+        }
+
+        .plant-table th,
+        .plant-table td {
+            padding: 8px;
+        }
+
+        .status-badge {
+            font-size: 11px;
+            padding: 2px 8px;
+        }
+
+        .btn-action {
+            font-size: 11px;
+            padding: 4px 10px;
+        }
+
+        .pagination .page-link {
+            min-width: 30px;
+            height: 30px;
+            font-size: 12px;
+            padding: 0 8px;
+        }
+    }
+
+    /* ========================================
+       ANIMATIONS
+       ======================================== */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .plant-table tbody tr {
+        animation: fadeInUp 0.3s ease both;
+    }
+
+    .plant-table tbody tr:nth-child(1) { animation-delay: 0.05s; }
+    .plant-table tbody tr:nth-child(2) { animation-delay: 0.1s; }
+    .plant-table tbody tr:nth-child(3) { animation-delay: 0.15s; }
+    .plant-table tbody tr:nth-child(4) { animation-delay: 0.2s; }
+    .plant-table tbody tr:nth-child(5) { animation-delay: 0.25s; }
+    .plant-table tbody tr:nth-child(6) { animation-delay: 0.3s; }
+    .plant-table tbody tr:nth-child(7) { animation-delay: 0.35s; }
+    .plant-table tbody tr:nth-child(8) { animation-delay: 0.4s; }
+    .plant-table tbody tr:nth-child(9) { animation-delay: 0.45s; }
+    .plant-table tbody tr:nth-child(10) { animation-delay: 0.5s; }
+</style>
+{% endblock %}
+
+{% block main %}
+<div class="page-header">
+    <div class="header-content">
+        <h3 class="page-title">
+            <i class="fas fa-leaf page-icon"></i>
+            لیست گیاهان
+        </h3>
+        <div class="breadcrumb">
+            <a href="{% url 'panel:home' %}" class="breadcrumb-link">داشبورد</a>
+            <i class="fas fa-chevron-left"></i>
+            <span class="current">لیست گیاهان</span>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Section -->
+<div class="upload-section">
+    <form method="post" action="{% url 'plant:plant-detect' %}" enctype="multipart/form-data" class="upload-form" id="detectForm">
+        {% csrf_token %}
+        <div class="file-input-wrapper">
+            <input type="file" name="image" id="imageInput" accept="image/*" required>
+        </div>
+        <button type="submit" class="btn-detect" id="detectBtn">
+            <i class="fas fa-microscope"></i>
+            تشخیص گیاه
+        </button>
+    </form>
+</div>
+
+<!-- Table Section -->
+<div class="table-container">
+    <div class="table-header">
+        <div class="table-title">
+            <i class="fas fa-list"></i>
+            لیست گیاهان
+            <span class="table-badge">{{ object_list|length }}</span>
+        </div>
+        <!-- Optional: Add filter/sort controls here -->
+    </div>
+
+    <div class="table-wrapper">
+        {% if object_list %}
+        <table class="plant-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>تصویر</th>
+                    <th>نام گیاه</th>
+                    <th>سلامت</th>
+                    <th>مشکل</th>
+                    <th>تاریخ ثبت</th>
+                    <th>عملیات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for object in object_list %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>
+                        <img src="{{ object.image.url }}" 
+                             alt="{{ object.name }}" 
+                             class="plant-image"
+                             loading="lazy">
+                    </td>
+                    <td><strong>{{ object.name }}</strong></td>
+                    <td>
+                        {% if object.healthy %}
+                        <span class="status-badge healthy">
+                            <i class="fas fa-check-circle"></i>
+                            سالم
+                        </span>
+                        {% else %}
+                        <span class="status-badge sick">
+                            <i class="fas fa-exclamation-circle"></i>
+                            بیمار
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if object.problem %}
+                        <span class="problem-text has-problem">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            {{ object.problem }}
+                        </span>
+                        {% else %}
+                        <span class="problem-text no-problem">
+                            <i class="fas fa-check"></i>
+                            بدون مشکل
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td>{{ object.created|date:"Y/m/d H:i" }}</td>
+                    <td>
+                        <div class="action-group">
+                            <a href="{% url 'panel:plant-detail' object.id %}" 
+                               class="btn-action primary">
+                                <i class="fas fa-eye"></i>
+                                جزئیات
+                            </a>
+                            <a href="{% url 'panel:plant-delete' object.id %}" 
+                               class="btn-action danger"
+                               onclick="return confirm('آیا از حذف این گیاه مطمئن هستید؟')">
+                                <i class="fas fa-trash"></i>
+                                حذف
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-seedling"></i>
+            <h4>هیچ گیاهی ثبت نشده است</h4>
+            <p>برای شروع، یک تصویر از گیاه را آپلود کرده و دکمه تشخیص را بزنید.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="pagination-wrapper">
+        <div class="pagination-info">
+            نمایش <strong>{{ page_obj.start_index }}</strong> تا <strong>{{ page_obj.end_index }}</strong> 
+            از <strong>{{ page_obj.paginator.count }}</strong> رکورد
+        </div>
+        <ul class="pagination">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <button class="page-link" onclick="changePage('{{ page_obj.previous_page_number }}')">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+                <span class="page-link"><i class="fas fa-chevron-right"></i></span>
+            </li>
+            {% endif %}
+
+            {% for i in page_obj.paginator.page_range %}
+                {% if page_obj.number == i %}
+                <li class="page-item active">
+                    <span class="page-link">{{ i }}</span>
+                </li>
+                {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                <li class="page-item">
+                    <button class="page-link" onclick="changePage('{{ i }}')">{{ i }}</button>
+                </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <button class="page-link" onclick="changePage('{{ page_obj.next_page_number }}')">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+                <span class="page-link"><i class="fas fa-chevron-left"></i></span>
+            </li>
+            {% endif %}
+        </ul>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // ========================================
+    // FILE INPUT VALIDATION
+    // ========================================
+    $('#imageInput').on('change', function() {
+        const file = this.files[0];
+        if (file) {
+            const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+            if (!validTypes.includes(file.type)) {
+                showToast('فرمت فایل نامعتبر است. لطفاً تصویر با فرمت JPG، PNG یا WebP انتخاب کنید.', 'error');
+                $(this).val('');
+                return;
+            }
+            if (file.size > 5 * 1024 * 1024) {
+                showToast('حجم فایل بیش از ۵ مگابایت است.', 'error');
+                $(this).val('');
+                return;
+            }
+            showToast('فایل با موفقیت انتخاب شد: ' + file.name, 'success');
+        }
+    });
+
+    // ========================================
+    // FORM SUBMIT WITH LOADING STATE
+    // ========================================
+    $('#detectForm').on('submit', function() {
+        const btn = $('#detectBtn');
+        const input = $('#imageInput');
+        
+        if (!input.val()) {
+            showToast('لطفاً یک تصویر انتخاب کنید.', 'warning');
+            return false;
+        }
+
+        btn.prop('disabled', true);
+        btn.html('<i class="fas fa-spinner fa-spin"></i> در حال تشخیص...');
+        showToast('در حال تشخیص گیاه... لطفاً صبر کنید.', 'info');
+        return true;
+    });
+
+    // ========================================
+    // PAGINATION FUNCTION
+    // ========================================
+    window.changePage = function(page_number) {
+        let current_url_params = new URLSearchParams(window.location.search);
+        current_url_params.set('page', page_number);
+        let new_url = window.location.pathname + '?' + current_url_params.toString();
+        window.location.href = new_url;
+    };
+
+    // ========================================
+    // CONFIRM DELETE WITH TOAST
+    // ========================================
+    $('.btn-action.danger').on('click', function(e) {
+        // The confirm dialog is handled by the onclick attribute
+        // This is just for additional toast notification
+        setTimeout(() => {
+            showToast('گیاه با موفقیت حذف شد.', 'success');
+        }, 500);
+    });
+
+    // ========================================
+    // VIEW DETAIL WITH ANIMATION
+    // ========================================
+    $('.btn-action.primary').on('click', function(e) {
+        // Optional: Add loading animation
+        // The link will navigate normally
+    });
+
+    // ========================================
+    // KEYBOARD SHORTCUTS
+    // ========================================
+    $(document).on('keydown', function(e) {
+        // Ctrl + U for upload focus
+        if (e.ctrlKey && e.key === 'u') {
+            e.preventDefault();
+            $('#imageInput').focus();
+        }
+        // Ctrl + Enter to submit
+        if (e.ctrlKey && e.key === 'Enter') {
+            e.preventDefault();
+            $('#detectForm').submit();
+        }
+    });
+
+    // ========================================
+    // TOAST FUNCTION (if not already defined)
+    // ========================================
+    if (typeof showToast === 'undefined') {
+        window.showToast = function(message, type = 'info', duration = 4000) {
+            const container = document.getElementById('toastContainer') || createToastContainer();
+            
+            const icons = {
+                success: 'fa-check-circle',
+                error: 'fa-times-circle',
+                warning: 'fa-exclamation-triangle',
+                info: 'fa-info-circle'
+            };
+            
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.innerHTML = `
+                <i class="fas ${icons[type] || icons.info} toast-icon"></i>
+                <span class="toast-message">${message}</span>
+                <button class="toast-close">&times;</button>
+            `;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(20px)';
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, duration);
+            
+            toast.querySelector('.toast-close').addEventListener('click', function() {
+                toast.remove();
+            });
+        };
+    }
+
+    function createToastContainer() {
+        const container = document.createElement('div');
+        container.id = 'toastContainer';
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+        return container;
+    }
+
+    console.log('✅ Plant List page initialized');
+});
+</script>
+{% endblock %}

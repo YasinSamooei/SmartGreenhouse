@@ -1,0 +1,2 @@
+../Core/Modules/Src/hih5030.c:6:6:HIH5030_Init	1
+../Core/Modules/Src/hih5030.c:12:7:HIH5030_ReadHumidity	5

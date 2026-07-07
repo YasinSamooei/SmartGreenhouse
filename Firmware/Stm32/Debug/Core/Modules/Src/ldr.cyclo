@@ -1,0 +1,3 @@
+../Core/Modules/Src/ldr.c:4:6:LDR_Init	1
+../Core/Modules/Src/ldr.c:9:10:LDR_ReadRaw	1
+../Core/Modules/Src/ldr.c:14:6:LDR_ControlLight	2

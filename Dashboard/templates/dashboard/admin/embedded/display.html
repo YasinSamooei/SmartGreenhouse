@@ -1,0 +1,2975 @@
+{% extends 'dashboard/admin/base.html' %}
+{% load static %}
+
+{% block title %}سیستم پایش هوشمند گلخانه{% endblock %}
+
+{% block extra_css %}
+<style>
+
+    @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&display=swap');
+
+    :root {
+        --bg-deep: #050d12;
+        --bg-card: #081520;
+        --bg-card2: #0b1e2d;
+        --border: #0d3045;
+        --border-glow: #0e4a6b;
+        --accent-green: #00e676;
+        --accent-cyan: #00bcd4;
+        --accent-blue: #1565c0;
+        --accent-amber: #ffab00;
+        --accent-red: #ff1744;
+        --accent-purple: #aa00ff;
+        --accent-teal: #00bfa5;
+        --text-primary: #e0f7fa;
+        --text-secondary: #78909c;
+        --text-dim: #455a64;
+        --glow-green: 0 0 18px #00e67655;
+        --glow-cyan: 0 0 18px #00bcd455;
+        --glow-red: 0 0 18px #ff174455;
+        --glow-amber: 0 0 18px #ffab0055;
+        --radius: 12px;
+        --radius-sm: 8px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+        font-family: 'Vazirmatn', sans-serif;
+        background: var(--bg-deep);
+        color: var(--text-primary);
+        min-height: 100vh;
+        overflow-x: hidden;
+        background-image:
+            radial-gradient(ellipse at 20% 0%, #001a2c 0%, transparent 60%),
+            radial-gradient(ellipse at 80% 100%, #00120a 0%, transparent 60%);
+    }
+
+    /* ─── HEADER OVERRIDE ─── */
+    .dashboard-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 999;
+        height: 70px;
+        background: #0a1a28;
+        border-bottom: 1px solid var(--border-color);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 2px 20px rgba(0,0,0,0.5);
+    }
+
+    .header-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 100%;
+        padding: 0 16px;
+        max-width: 100%;
+        gap: 8px;
+    }
+
+    .header-logo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-shrink: 0;
+    }
+
+    .logo-icon {
+        width: 38px;
+        height: 38px;
+        background: linear-gradient(135deg, #00e676, #00897b);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        box-shadow: var(--glow-green);
+        flex-shrink: 0;
+    }
+
+    .logo-text h1 {
+        font-size: 16px;
+        font-weight: 800;
+        color: var(--accent-green);
+        letter-spacing: 0.5px;
+        text-shadow: 0 0 20px #00e67660;
+        line-height: 1.2;
+        white-space: nowrap;
+    }
+
+    .logo-text p {
+        font-size: 10px;
+        color: var(--text-secondary);
+        font-weight: 300;
+        white-space: nowrap;
+    }
+
+    .header-center {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: nowrap;
+        justify-content: center;
+        flex: 1;
+        overflow-x: auto;
+    }
+
+    .status-pill {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+        border: 1px solid;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .status-pill.ok {
+        background: #00e67615;
+        border-color: #00e67650;
+        color: var(--accent-green);
+    }
+
+    .status-pill.warn {
+        background: #ffab0015;
+        border-color: #ffab0050;
+        color: var(--accent-amber);
+    }
+
+    .status-pill.danger {
+        background: #ff174415;
+        border-color: #ff174450;
+        color: var(--accent-red);
+    }
+
+    .status-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+        animation: pulse-dot 1.5s ease-in-out infinite;
+        flex-shrink: 0;
+    }
+
+    @keyframes pulse-dot {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.5; transform: scale(0.7); }
+    }
+
+    .header-time {
+        text-align: left;
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--accent-cyan);
+        font-variant-numeric: tabular-nums;
+        text-shadow: var(--glow-cyan);
+        white-space: nowrap;
+        min-width: 80px;
+        flex-shrink: 0;
+    }
+
+    .header-date {
+        font-size: 10px;
+        color: var(--text-secondary);
+        text-align: left;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    /* ─── LAYOUT ─── */
+    .container {
+        max-width: 1440px;
+        margin: 0 auto;
+        padding: 85px 16px 30px;
+    }
+
+    /* ─── TOP METRIC CARDS ─── */
+    .metrics-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 12px;
+        margin-bottom: 18px;
+    }
+
+    .metric-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 14px;
+        position: relative;
+        overflow: hidden;
+        transition: border-color 0.3s, transform 0.2s;
+        cursor: pointer;
+    }
+
+    .metric-card:hover {
+        transform: translateY(-2px);
+        border-color: var(--border-glow);
+    }
+
+    .metric-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 2px;
+        background: var(--card-accent, var(--accent-cyan));
+        border-radius: var(--radius) var(--radius) 0 0;
+    }
+
+    .metric-card::after {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: radial-gradient(ellipse at 50% 0%, var(--card-glow, #00bcd410) 0%, transparent 70%);
+        pointer-events: none;
+    }
+
+    .metric-card.green { --card-accent: var(--accent-green); --card-glow: #00e67610; }
+    .metric-card.cyan  { --card-accent: var(--accent-cyan);  --card-glow: #00bcd410; }
+    .metric-card.amber { --card-accent: var(--accent-amber); --card-glow: #ffab0010; }
+    .metric-card.red   { --card-accent: var(--accent-red);   --card-glow: #ff174410; }
+    .metric-card.purple{ --card-accent: var(--accent-purple);--card-glow: #aa00ff10; }
+    .metric-card.teal  { --card-accent: var(--accent-teal);  --card-glow: #00bfa510; }
+
+    .metric-label {
+        font-size: 9px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+        margin-bottom: 6px;
+    }
+
+    .metric-main {
+        display: flex;
+        align-items: flex-end;
+        gap: 4px;
+        margin-bottom: 4px;
+    }
+
+    .metric-value {
+        font-size: 26px;
+        font-weight: 800;
+        color: var(--card-accent, var(--accent-cyan));
+        line-height: 1;
+        font-variant-numeric: tabular-nums;
+        text-shadow: 0 0 20px var(--card-glow, #00bcd440);
+    }
+
+    .metric-unit {
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--text-secondary);
+        padding-bottom: 2px;
+    }
+
+    .metric-icon {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        font-size: 18px;
+        opacity: 0.25;
+    }
+
+    .mini-chart {
+        height: 30px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .mini-chart svg {
+        width: 100%;
+        height: 100%;
+    }
+
+    .metric-trend {
+        font-size: 10px;
+        margin-top: 2px;
+        display: flex;
+        align-items: center;
+        gap: 3px;
+    }
+
+    .trend-up { color: var(--accent-red); }
+    .trend-down { color: var(--accent-green); }
+    .trend-stable { color: var(--text-secondary); }
+
+    /* ─── MAIN GRID ─── */
+    .main-grid {
+        display: grid;
+        grid-template-columns: 260px 1fr 260px;
+        gap: 14px;
+        margin-bottom: 14px;
+    }
+
+    @media (max-width: 1100px) {
+        .main-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
+    @media (max-width: 700px) {
+        .main-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* ─── CARD BASE ─── */
+    .card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .card-header {
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 6px;
+        flex-shrink: 0;
+    }
+
+    .card-title {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: var(--accent-cyan);
+        white-space: nowrap;
+    }
+
+    .card-body {
+        padding: 10px 12px;
+        flex: 1;
+        overflow-y: auto;
+    }
+
+    /* ─── SENSOR READINGS ─── */
+    .sensor-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 0;
+        border-bottom: 1px solid #0d304520;
+    }
+
+    .sensor-item:last-child { border-bottom: none; }
+
+    .sensor-icon { font-size: 16px; width: 24px; text-align: center; flex-shrink: 0; }
+
+    .sensor-info { flex: 1; min-width: 0; }
+
+    .sensor-name { font-size: 10px; color: var(--text-secondary); margin-bottom: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .sensor-val {
+        font-size: 16px;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .sensor-bar-wrap {
+        width: 60px;
+        flex-shrink: 0;
+    }
+
+    .sensor-bar-bg {
+        height: 3px;
+        background: #0d3045;
+        border-radius: 2px;
+        overflow: hidden;
+    }
+
+    .sensor-bar-fill {
+        height: 100%;
+        border-radius: 2px;
+        background: var(--bar-color, var(--accent-green));
+        transition: width 0.8s ease;
+    }
+
+    .sensor-pct { 
+        font-size: 9px; 
+        color: var(--text-dim); 
+        margin-top: 2px; 
+        text-align: right;
+        min-height: 16px;
+    }
+
+    .sensor-pct .badge {
+        display: inline-block;
+        padding: 1px 6px;
+        border-radius: 8px;
+        font-size: 8px;
+        font-weight: 700;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+
+    .badge.ok { background: #00e67620; color: var(--accent-green); border: 1px solid #00e67640; }
+    .badge.warn { background: #ffab0020; color: var(--accent-amber); border: 1px solid #ffab0040; }
+    .badge.danger { background: #ff174420; color: var(--accent-red); border: 1px solid #ff174440; }
+
+    /* ─── CHARTS PANEL ─── */
+    .chart-tabs {
+        display: flex;
+        gap: 3px;
+        flex-wrap: wrap;
+    }
+
+    .tab-btn {
+        padding: 2px 8px;
+        border-radius: 4px;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--text-secondary);
+        font-size: 9px;
+        font-family: inherit;
+        cursor: pointer;
+        transition: all 0.2s;
+        white-space: nowrap;
+    }
+
+    .tab-btn.active {
+        background: var(--accent-cyan);
+        color: #000;
+        border-color: var(--accent-cyan);
+        font-weight: 700;
+    }
+
+    .tab-btn:hover:not(.active) {
+        border-color: var(--accent-cyan);
+        color: var(--text-primary);
+    }
+
+    .chart-area {
+        padding: 10px 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        flex: 1;
+    }
+
+    .chart-row-label {
+        font-size: 10px;
+        color: var(--text-secondary);
+        margin-bottom: 2px;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .chart-row-label span { font-weight: 600; }
+
+    .chart-svg-wrap {
+        height: 50px;
+        background: #081824;
+        border-radius: 4px;
+        border: 1px solid #0d304540;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .chart-svg-wrap svg {
+        width: 100%;
+        height: 100%;
+    }
+
+    /* ─── CONTROLS ─── */
+    .controls-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        padding: 10px 12px;
+    }
+
+    .control-item {
+        background: var(--bg-card2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        transition: border-color 0.3s;
+    }
+
+    .control-item.active {
+        border-color: var(--ctrl-color, var(--accent-green));
+        box-shadow: 0 0 12px var(--ctrl-glow, #00e67620);
+    }
+
+    .control-icon { font-size: 20px; }
+    .control-name { font-size: 10px; color: var(--text-secondary); text-align: center; }
+
+    .toggle-switch {
+        position: relative;
+        width: 40px;
+        height: 20px;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+
+    .toggle-switch input { display: none; }
+
+    .toggle-track {
+        position: absolute;
+        inset: 0;
+        background: #0d3045;
+        border-radius: 10px;
+        transition: background 0.3s;
+        border: 1px solid var(--border);
+    }
+
+    .toggle-thumb {
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        width: 14px;
+        height: 14px;
+        background: var(--text-dim);
+        border-radius: 50%;
+        transition: all 0.3s;
+    }
+
+    .toggle-switch input:checked ~ .toggle-track { background: var(--ctrl-color, var(--accent-green)); border-color: var(--ctrl-color, var(--accent-green)); }
+    .toggle-switch input:checked ~ .toggle-thumb { right: auto; left: 2px; background: #fff; }
+
+    .ctrl-green { --ctrl-color: var(--accent-green); --ctrl-glow: #00e67625; }
+    .ctrl-purple { --ctrl-color: var(--accent-purple); --ctrl-glow: #aa00ff25; }
+    .ctrl-cyan   { --ctrl-color: var(--accent-cyan);   --ctrl-glow: #00bcd425; }
+    .ctrl-red    { --ctrl-color: var(--accent-red);    --ctrl-glow: #ff174425; }
+    .ctrl-amber  { --ctrl-color: var(--accent-amber);  --ctrl-glow: #ffab0025; }
+    .ctrl-teal   { --ctrl-color: var(--accent-teal);   --ctrl-glow: #00bfa525; }
+
+    /* ─── GREENHOUSE IMAGE PANEL ─── */
+    .gh-image-panel {
+        background: var(--bg-card2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .gh-image-wrap {
+        width: 100%;
+        aspect-ratio: 4/3;
+        background: #0a1f2e;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .gh-image-wrap img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    .gh-image-placeholder {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        color: var(--text-dim);
+        position: absolute;
+        inset: 0;
+        padding: 20px;
+        text-align: center;
+    }
+
+    .gh-image-placeholder .ph-icon { font-size: 36px; opacity: 0.3; }
+    .gh-image-placeholder p { font-size: 11px; line-height: 1.6; }
+
+    .gh-stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+        padding: 10px 12px;
+    }
+
+    .gh-stat {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11px;
+    }
+
+    .gh-stat-icon { font-size: 14px; }
+    .gh-stat-val { font-weight: 700; color: var(--text-primary); }
+    .gh-stat-lbl { color: var(--text-secondary); font-size: 9px; }
+
+    /* ─── ALERTS ─── */
+    .alerts-list {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        padding: 8px 12px;
+        max-height: 180px;
+        overflow-y: auto;
+        flex: 1;
+    }
+
+    .alert-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 8px;
+        border-radius: 4px;
+        background: var(--bg-card2);
+        border: 1px solid var(--border);
+        font-size: 11px;
+        animation: fade-in 0.3s ease both;
+        flex-shrink: 0;
+    }
+
+    .alert-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    .alert-dot.red    { background: var(--accent-red);    box-shadow: var(--glow-red); }
+    .alert-dot.amber  { background: var(--accent-amber);  box-shadow: var(--glow-amber); }
+    .alert-dot.green  { background: var(--accent-green);  box-shadow: var(--glow-green); }
+    .alert-dot.cyan   { background: var(--accent-cyan);   box-shadow: var(--glow-cyan); }
+
+    .alert-time { color: var(--text-dim); font-size: 9px; white-space: nowrap; flex-shrink: 0; }
+    .alert-msg  { flex: 1; color: var(--text-primary); font-size: 10px; }
+
+    .alert-msg strong { font-size: 10px; }
+    .alert-msg small { display: block; color: var(--text-secondary); font-size: 9px; }
+
+    .alerts-header-actions {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+
+    .alerts-header-actions .btn-mark-all {
+        background: transparent;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 2px 8px;
+        color: var(--text-secondary);
+        font-size: 9px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-family: inherit;
+        white-space: nowrap;
+    }
+
+    .alerts-header-actions .btn-mark-all:hover {
+        border-color: var(--accent-cyan);
+        color: var(--accent-cyan);
+        background: #00bcd410;
+    }
+
+    /* ─── BOTTOM ROW ─── */
+    .bottom-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 12px;
+    }
+
+    /* ─── DATA LOG ─── */
+    .data-log-info {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+        padding: 10px 12px;
+    }
+
+    .log-stat {
+        background: var(--bg-card2);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 6px 8px;
+    }
+
+    .log-stat-lbl { font-size: 9px; color: var(--text-secondary); margin-bottom: 2px; }
+    .log-stat-val { font-size: 12px; font-weight: 600; color: var(--text-primary); }
+
+    .log-progress-wrap { padding: 0 12px 10px; }
+    .log-progress-label { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-secondary); margin-bottom: 4px; }
+
+    .log-progress-bg {
+        height: 4px;
+        background: #0d3045;
+        border-radius: 2px;
+        overflow: hidden;
+    }
+
+    .log-progress-fill {
+        height: 100%;
+        width: 33%;
+        background: linear-gradient(90deg, var(--accent-cyan), var(--accent-green));
+        border-radius: 2px;
+        transition: width 0.8s ease;
+    }
+
+    /* ─── PICOW CONFIG ─── */
+    .picow-config {
+        padding: 10px 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .picow-config .input-row {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .picow-config .input-row input {
+        background: var(--bg-card2);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 4px 8px;
+        color: var(--text-primary);
+        flex: 1;
+        min-width: 100px;
+        font-family: 'Vazirmatn', sans-serif;
+        font-size: 11px;
+        height: 28px;
+    }
+
+    .picow-config .input-row input:focus {
+        outline: none;
+        border-color: var(--accent-cyan);
+    }
+
+    .picow-config .input-row .action-button {
+        padding: 4px 10px;
+        min-height: auto;
+        flex-direction: row;
+        gap: 4px;
+        border-radius: 4px;
+        border: 1px solid var(--border);
+        background: var(--bg-card2);
+        color: var(--text-secondary);
+        font-family: inherit;
+        font-size: 10px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        font-weight: 600;
+        white-space: nowrap;
+        height: 28px;
+    }
+
+    .picow-config .input-row .action-button:hover {
+        border-color: var(--accent-cyan);
+        color: var(--accent-cyan);
+        background: #00bcd410;
+    }
+
+    .picow-config .input-row .action-button .action-icon {
+        font-size: 12px;
+        line-height: 1;
+    }
+
+    .picow-config .input-row .action-button .action-text {
+        font-size: 10px;
+        line-height: 1;
+    }
+
+    .picow-status {
+        font-size: 11px;
+        color: var(--text-secondary);
+        padding: 2px 0;
+    }
+
+    .picow-status.success { color: var(--accent-green); }
+    .picow-status.error { color: var(--accent-red); }
+    .picow-status.warning { color: var(--accent-amber); }
+
+    /* ─── WIFI INFO ─── */
+    .wifi-info {
+        padding: 8px 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .wifi-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 11px;
+        padding: 2px 0;
+    }
+
+    .wifi-row .lbl { color: var(--text-secondary); }
+    .wifi-row .val { color: var(--text-primary); font-weight: 500; }
+    .wifi-row .val.green { color: var(--accent-green); }
+    .wifi-row .val.cyan { color: var(--accent-cyan); }
+
+    .signal-bars {
+        display: flex;
+        align-items: flex-end;
+        gap: 2px;
+        height: 16px;
+    }
+
+    .signal-bar {
+        width: 3px;
+        background: var(--text-dim);
+        border-radius: 1px;
+        transition: all 0.3s;
+    }
+
+    .signal-bar.active {
+        background: var(--accent-green);
+        box-shadow: 0 0 6px #00e67655;
+    }
+
+    .signal-bar.inactive {
+        background: var(--text-dim);
+        opacity: 0.3;
+    }
+
+    .signal-bar:nth-child(1) { height: 4px; }
+    .signal-bar:nth-child(2) { height: 8px; }
+    .signal-bar:nth-child(3) { height: 12px; }
+    .signal-bar:nth-child(4) { height: 16px; }
+
+    /* ─── QUICK ACTIONS ─── */
+    .actions-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+        padding: 10px 12px;
+    }
+
+    .action-button {
+        padding: 8px 6px;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+        background: var(--bg-card2);
+        color: var(--text-secondary);
+        font-family: inherit;
+        font-size: 10px;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        transition: all 0.2s;
+        font-weight: 600;
+        text-align: center;
+        min-height: 50px;
+        word-break: break-word;
+    }
+
+    .action-button:hover {
+        border-color: var(--accent-cyan);
+        color: var(--accent-cyan);
+        background: #00bcd410;
+    }
+
+    .action-button .action-icon {
+        font-size: 18px;
+        line-height: 1;
+    }
+
+    .action-button .action-text {
+        font-size: 9px;
+        line-height: 1.2;
+    }
+
+    /* ─── THRESHOLD ALERT BADGES ─── */
+    .badge {
+        padding: 2px 6px;
+        border-radius: 8px;
+        font-size: 9px;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    .badge.ok     { background: #00e67620; color: var(--accent-green); border: 1px solid #00e67640; }
+    .badge.warn   { background: #ffab0020; color: var(--accent-amber); border: 1px solid #ffab0040; }
+    .badge.danger { background: #ff174420; color: var(--accent-red);   border: 1px solid #ff174440; }
+
+    /* ─── SCROLLBAR ─── */
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #0d3045; border-radius: 2px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--border-glow); }
+
+    /* ─── ANIMATIONS ─── */
+    @keyframes blink-red {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.4; }
+    }
+
+    .alert-blink { animation: blink-red 1.2s ease-in-out infinite; }
+
+    @keyframes fade-in {
+        from { opacity: 0; transform: translateY(6px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .card { animation: fade-in 0.4s ease both; }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 900px) {
+        .metrics-row { grid-template-columns: repeat(3, 1fr); }
+        .main-grid { grid-template-columns: 1fr; }
+        .bottom-row { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 700px) {
+        .header-container { padding: 0 10px; gap: 4px; }
+        .logo-text h1 { font-size: 13px; }
+        .logo-text p { display: none; }
+        .logo-icon { width: 32px; height: 32px; font-size: 14px; }
+        .header-time { font-size: 14px; min-width: 60px; }
+        .header-date { font-size: 8px; }
+        .container { padding: 75px 10px 20px; }
+        .metrics-row { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+        .metric-value { font-size: 20px; }
+        .main-grid { grid-template-columns: 1fr; }
+        .bottom-row { grid-template-columns: 1fr; }
+        .controls-grid { grid-template-columns: 1fr 1fr; }
+        .actions-grid { grid-template-columns: 1fr 1fr; }
+        .header-center .status-pill span { font-size: 9px; }
+        .header-center .status-pill { padding: 3px 6px; font-size: 9px; }
+        .card-header { padding: 8px 10px; }
+        .card-title { font-size: 9px; }
+        .card-body { padding: 8px 10px; }
+        .chart-svg-wrap { height: 40px; }
+        .sensor-val { font-size: 14px; }
+        .sensor-bar-wrap { width: 50px; }
+        .gh-image-wrap { aspect-ratio: 16/9; }
+        .alerts-list { max-height: 140px; }
+        .picow-config .input-row input { min-width: 80px; font-size: 10px; height: 24px; }
+        .picow-config .input-row .action-button { height: 24px; font-size: 9px; padding: 3px 8px; }
+        .wifi-row { font-size: 10px; }
+        .log-stat-val { font-size: 11px; }
+        .action-button { min-height: 44px; padding: 6px 4px; }
+        .action-button .action-icon { font-size: 16px; }
+        .action-button .action-text { font-size: 8px; }
+        .alerts-header-actions .btn-mark-all { font-size: 8px; padding: 2px 6px; }
+        .alert-item { font-size: 10px; padding: 4px 6px; }
+        .alert-msg { font-size: 9px; }
+        .alert-msg strong { font-size: 9px; }
+        .alert-msg small { font-size: 8px; }
+    }
+
+    @media (max-width: 400px) {
+        .metrics-row { grid-template-columns: 1fr 1fr; }
+        .header-time { font-size: 12px; min-width: 50px; }
+        .logo-icon { width: 28px; height: 28px; font-size: 12px; }
+        .logo-text h1 { font-size: 11px; }
+        .container { padding: 70px 6px 15px; }
+        .controls-grid { grid-template-columns: 1fr; }
+        .actions-grid { grid-template-columns: 1fr 1fr; }
+        .metric-value { font-size: 18px; }
+        .header-center .status-pill { font-size: 8px; padding: 2px 5px; }
+        .header-center .status-pill span { font-size: 8px; }
+    }
+
+    /* Loading overlay for charts */
+    .chart-loading {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: var(--text-dim);
+        font-size: 10px;
+    }
+
+    .chart-loading .spinner {
+        width: 16px;
+        height: 16px;
+        border: 2px solid var(--border);
+        border-top-color: var(--accent-cyan);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        margin-left: 6px;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    /* Toast for alerts */
+    .toast-container {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        max-width: 90%;
+    }
+
+    .toast {
+        padding: 10px 14px;
+        background: #0a1a28;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 220px;
+        animation: slideUp 0.4s ease;
+        backdrop-filter: blur(10px);
+    }
+
+    .toast-success { border-right: 3px solid var(--accent-green); }
+    .toast-error { border-right: 3px solid var(--accent-red); }
+    .toast-warning { border-right: 3px solid var(--accent-amber); }
+    .toast-info { border-right: 3px solid var(--accent-cyan); }
+
+    .toast-icon { font-size: 16px; }
+    .toast-message { flex: 1; font-size: 12px; color: var(--text-primary); }
+    .toast-close {
+        background: transparent;
+        border: none;
+        color: var(--text-dim);
+        cursor: pointer;
+        font-size: 16px;
+    }
+
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Refresh button */
+    .btn-refresh {
+        background: transparent;
+        border: 1px solid var(--border);
+        border-radius: 50%;
+        width: 26px;
+        height: 26px;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .btn-refresh:hover {
+        border-color: var(--accent-cyan);
+        color: var(--accent-cyan);
+        background: rgba(0, 188, 212, 0.1);
+    }
+
+    .btn-refresh .fa-sync-alt {
+        font-size: 12px;
+    }
+</style>
+{% endblock %}
+
+{% block main %}
+<!-- HEADER (Custom) -->
+<header class="dashboard-header" style="position:relative;margin-top:0;background:#0a1a28;border-bottom:1px solid var(--border-color);z-index:100;">
+    <div class="header-container">
+        <div class="header-logo">
+            <div class="logo-icon">🌿</div>
+            <div class="logo-text">
+                <h1>سیستم پایش گلخانه</h1>
+                <p>Greenhouse Monitoring & Control</p>
+            </div>
+        </div>
+        <div class="header-center">
+            <div class="status-pill ok" id="sys-status">
+                <div class="status-dot"></div>
+                <span>همه سیستم‌ها فعال</span>
+            </div>
+            <div class="status-pill ok" id="wifi-status">
+                <div class="status-dot"></div>
+                <span>PICOW متصل</span>
+            </div>
+            <div class="status-pill warn" id="alert-status" style="display:none">
+                <div class="status-dot"></div>
+                <span>هشدار فعال</span>
+            </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+            <div>
+                <div class="header-time" id="clock">--:--:--</div>
+                <div class="header-date" id="dateline">PI PICO W • MicroPython</div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<div class="container">
+
+    <!-- TOP METRIC CARDS -->
+    <div class="metrics-row">
+        <!-- Temp -->
+        <div class="metric-card green" id="mc-temp">
+            <div class="metric-icon">🌡️</div>
+            <div class="metric-label">دما</div>
+            <div class="metric-main">
+                <div class="metric-value" id="mv-temp">--</div>
+                <div class="metric-unit">°C</div>
+            </div>
+            <div class="mini-chart" id="mc-temp-chart"></div>
+            <div class="metric-trend trend-stable" id="mt-temp">━ در حال بارگذاری</div>
+        </div>
+        <!-- Humidity -->
+        <div class="metric-card cyan" id="mc-hum">
+            <div class="metric-icon">💧</div>
+            <div class="metric-label">رطوبت هوا</div>
+            <div class="metric-main">
+                <div class="metric-value" id="mv-hum">--</div>
+                <div class="metric-unit">%</div>
+            </div>
+            <div class="mini-chart" id="mc-hum-chart"></div>
+            <div class="metric-trend trend-stable" id="mt-hum">━ در حال بارگذاری</div>
+        </div>
+        <!-- Soil -->
+        <div class="metric-card teal" id="mc-soil">
+            <div class="metric-icon">🌱</div>
+            <div class="metric-label">رطوبت خاک</div>
+            <div class="metric-main">
+                <div class="metric-value" id="mv-soil">--</div>
+                <div class="metric-unit">%</div>
+            </div>
+            <div class="mini-chart" id="mc-soil-chart"></div>
+            <div class="metric-trend trend-stable" id="mt-soil">━ در حال بارگذاری</div>
+        </div>
+        <!-- CO2 -->
+        <div class="metric-card amber" id="mc-co2">
+            <div class="metric-icon">☁️</div>
+            <div class="metric-label">CO₂</div>
+            <div class="metric-main">
+                <div class="metric-value" id="mv-co2">--</div>
+                <div class="metric-unit">ppm</div>
+            </div>
+            <div class="mini-chart" id="mc-co2-chart"></div>
+            <div class="metric-trend trend-stable" id="mt-co2">━ در حال بارگذاری</div>
+        </div>
+        <!-- Light -->
+        <div class="metric-card amber" style="--card-accent:#ffd740;--card-glow:#ffd74010">
+            <div class="metric-icon">☀️</div>
+            <div class="metric-label">شدت نور</div>
+            <div class="metric-main">
+                <div class="metric-value" style="color:#ffd740" id="mv-lux">--</div>
+                <div class="metric-unit">Lux</div>
+            </div>
+            <div class="mini-chart" id="mc-lux-chart"></div>
+            <div class="metric-trend trend-stable" id="mt-lux">━ در حال بارگذاری</div>
+        </div>
+        <!-- Gas -->
+        <div class="metric-card red" id="mc-gas">
+            <div class="metric-icon">⚠️</div>
+            <div class="metric-label">گاز (MQ)</div>
+            <div class="metric-main">
+                <div class="metric-value" id="mv-gas">--</div>
+                <div class="metric-unit">%</div>
+            </div>
+            <div class="mini-chart" id="mc-gas-chart"></div>
+            <div class="metric-trend trend-stable" id="mt-gas">━ در حال بارگذاری</div>
+        </div>
+    </div>
+
+    <!-- MAIN GRID -->
+    <div class="main-grid">
+
+        <!-- LEFT: Sensor Readings + Actuators -->
+        <div style="display:flex;flex-direction:column;gap:12px">
+
+            <!-- Sensor Readings -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">📊 قرائت سنسورها</div>
+                </div>
+                <div class="card-body" style="padding:4px 10px;">
+                    <div class="sensor-item">
+                        <div class="sensor-icon">🌡️</div>
+                        <div class="sensor-info">
+                            <div class="sensor-name">دما — DHT22</div>
+                            <div class="sensor-val" style="color:var(--accent-green)"><span id="sv-temp">--</span> °C</div>
+                        </div>
+                        <div class="sensor-bar-wrap">
+                            <div class="sensor-bar-bg"><div class="sensor-bar-fill" id="sb-temp" style="width:0%;--bar-color:var(--accent-green)"></div></div>
+                            <div class="sensor-pct"><span class="badge ok" id="badge-temp">نرمال</span></div>
+                        </div>
+                    </div>
+                    <div class="sensor-item">
+                        <div class="sensor-icon">💧</div>
+                        <div class="sensor-info">
+                            <div class="sensor-name">رطوبت هوا — DHT22</div>
+                            <div class="sensor-val" style="color:var(--accent-cyan)"><span id="sv-hum">--</span> %</div>
+                        </div>
+                        <div class="sensor-bar-wrap">
+                            <div class="sensor-bar-bg"><div class="sensor-bar-fill" id="sb-hum" style="width:0%;--bar-color:var(--accent-cyan)"></div></div>
+                            <div class="sensor-pct"><span class="badge ok" id="badge-hum">نرمال</span></div>
+                        </div>
+                    </div>
+                    <div class="sensor-item">
+                        <div class="sensor-icon">🌱</div>
+                        <div class="sensor-info">
+                            <div class="sensor-name">رطوبت خاک — LM393</div>
+                            <div class="sensor-val" style="color:var(--accent-teal)"><span id="sv-soil">--</span> %</div>
+                        </div>
+                        <div class="sensor-bar-wrap">
+                            <div class="sensor-bar-bg"><div class="sensor-bar-fill" id="sb-soil" style="width:0%;--bar-color:var(--accent-teal)"></div></div>
+                            <div class="sensor-pct"><span class="badge ok" id="badge-soil">نرمال</span></div>
+                        </div>
+                    </div>
+                    <div class="sensor-item">
+                        <div class="sensor-icon">☁️</div>
+                        <div class="sensor-info">
+                            <div class="sensor-name">CO₂ — MQ-135</div>
+                            <div class="sensor-val" style="color:var(--accent-amber)"><span id="sv-co2">--</span> ppm</div>
+                        </div>
+                        <div class="sensor-bar-wrap">
+                            <div class="sensor-bar-bg"><div class="sensor-bar-fill" id="sb-co2" style="width:0%;--bar-color:var(--accent-amber)"></div></div>
+                            <div class="sensor-pct"><span class="badge ok" id="badge-co2">نرمال</span></div>
+                        </div>
+                    </div>
+                    <div class="sensor-item">
+                        <div class="sensor-icon">☀️</div>
+                        <div class="sensor-info">
+                            <div class="sensor-name">شدت نور — LDR</div>
+                            <div class="sensor-val" style="color:#ffd740"><span id="sv-lux">--</span> Lux</div>
+                        </div>
+                        <div class="sensor-bar-wrap">
+                            <div class="sensor-bar-bg"><div class="sensor-bar-fill" id="sb-lux" style="width:0%;--bar-color:#ffd740"></div></div>
+                            <div class="sensor-pct"><span class="badge ok" id="badge-lux">نرمال</span></div>
+                        </div>
+                    </div>
+                    <div class="sensor-item">
+                        <div class="sensor-icon">⚠️</div>
+                        <div class="sensor-info">
+                            <div class="sensor-name">گاز — MQ سنسور</div>
+                            <div class="sensor-val" style="color:var(--accent-red)"><span id="sv-gas">--</span> %</div>
+                        </div>
+                        <div class="sensor-bar-wrap">
+                            <div class="sensor-bar-bg"><div class="sensor-bar-fill" id="sb-gas" style="width:0%;--bar-color:var(--accent-red)"></div></div>
+                            <div class="sensor-pct"><span class="badge ok" id="badge-gas">نرمال</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actuators -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">⚡ وضعیت عملگرها</div>
+                </div>
+                <div class="card-body" style="padding:4px 10px;">
+                    <div class="sensor-item">
+                        <div class="sensor-icon">🚿</div>
+                        <div class="sensor-info">
+                            <div class="sensor-name">پمپ آبیاری</div>
+                            <div class="sensor-val" style="font-size:13px;color:var(--accent-green)" id="act-pump-lbl">غیرفعال</div>
+                        </div>
+                        <span class="badge" id="act-pump" style="background:#1a1a1a;color:var(--text-dim);border-color:#333">OFF</span>
+                    </div>
+                    <div class="sensor-item">
+                        <div class="sensor-icon">💡</div>
+                        <div class="sensor-info">
+                            <div class="sensor-name">LED رشد گیاه</div>
+                            <div class="sensor-val" style="font-size:13px;color:var(--accent-purple)" id="act-led-lbl">غیرفعال</div>
+                        </div>
+                        <span class="badge" id="act-led" style="background:#1a1a1a;color:var(--text-dim);border-color:#333">OFF</span>
+                    </div>
+                    <div class="sensor-item">
+                        <div class="sensor-icon">🌀</div>
+                        <div class="sensor-info">
+                            <div class="sensor-name">فن تهویه</div>
+                            <div class="sensor-val" style="font-size:13px;color:var(--accent-cyan)" id="act-fan-lbl">غیرفعال</div>
+                        </div>
+                        <span class="badge" id="act-fan" style="background:#1a1a1a;color:var(--text-dim);border-color:#333">OFF</span>
+                    </div>
+                    <div class="sensor-item">
+                        <div class="sensor-icon">🔔</div>
+                        <div class="sensor-info">
+                            <div class="sensor-name">بیزر هشدار</div>
+                            <div class="sensor-val" style="font-size:13px;color:var(--text-dim)" id="act-buz-lbl">غیرفعال</div>
+                        </div>
+                        <span class="badge" id="act-buz" style="background:#1a1a1a;color:var(--text-dim);border-color:#333">OFF</span>
+                    </div>
+                    <div class="sensor-item">
+                        <div class="sensor-icon">🔥</div>
+                        <div class="sensor-info">
+                            <div class="sensor-name">گرمایش</div>
+                            <div class="sensor-val" style="font-size:13px;color:var(--accent-amber)" id="act-heater-lbl">غیرفعال</div>
+                        </div>
+                        <span class="badge" id="act-heater" style="background:#1a1a1a;color:var(--text-dim);border-color:#333">OFF</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CENTER: Charts -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">📈 نمودار زمان‌واقعی</div>
+                <div class="chart-tabs">
+                    <button class="tab-btn" data-range="1">۱ ساعت</button>
+                    <button class="tab-btn active" data-range="6">۶ ساعت</button>
+                    <button class="tab-btn" data-range="24">۲۴ ساعت</button>
+                    <button class="tab-btn" data-range="168">۷ روز</button>
+                </div>
+            </div>
+            <div class="chart-area">
+                <div>
+                    <div class="chart-row-label">دما (°C) <span id="clbl-temp" style="color:var(--accent-green)">--</span></div>
+                    <div class="chart-svg-wrap" id="chart-temp">
+                        <div class="chart-loading"><span class="spinner"></span>در حال بارگذاری...</div>
+                    </div>
+                </div>
+                <div>
+                    <div class="chart-row-label">رطوبت هوا (%) <span id="clbl-hum" style="color:var(--accent-cyan)">--</span></div>
+                    <div class="chart-svg-wrap" id="chart-hum">
+                        <div class="chart-loading"><span class="spinner"></span>در حال بارگذاری...</div>
+                    </div>
+                </div>
+                <div>
+                    <div class="chart-row-label">رطوبت خاک (%) <span id="clbl-soil" style="color:var(--accent-teal)">--</span></div>
+                    <div class="chart-svg-wrap" id="chart-soil">
+                        <div class="chart-loading"><span class="spinner"></span>در حال بارگذاری...</div>
+                    </div>
+                </div>
+                <div>
+                    <div class="chart-row-label">CO₂ (ppm) <span id="clbl-co2" style="color:var(--accent-amber)">--</span></div>
+                    <div class="chart-svg-wrap" id="chart-co2">
+                        <div class="chart-loading"><span class="spinner"></span>در حال بارگذاری...</div>
+                    </div>
+                </div>
+                <div>
+                    <div class="chart-row-label">شدت نور (Lux) <span id="clbl-lux" style="color:#ffd740">--</span></div>
+                    <div class="chart-svg-wrap" id="chart-lux">
+                        <div class="chart-loading"><span class="spinner"></span>در حال بارگذاری...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: Controls + Greenhouse Image -->
+        <div style="display:flex;flex-direction:column;gap:12px">
+
+            <!-- System Controls -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">🎛️ کنترل سیستم</div>
+                    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+                        <span style="font-size:9px;color:var(--text-secondary);" id="mode-label">حالت: اتوماتیک</span>
+                        <label class="toggle-switch ctrl-teal" style="width:32px;height:16px;">
+                            <input type="checkbox" id="auto-toggle" checked onchange="toggleAutoMode(this)">
+                            <div class="toggle-track"></div>
+                            <div class="toggle-thumb" style="width:10px;height:10px;top:2px;right:2px;"></div>
+                        </label>
+                    </div>
+                </div>
+                <div class="controls-grid">
+
+                    <div class="control-item ctrl-green" id="ctrl-pump">
+                        <div class="control-icon">🚿</div>
+                        <div class="control-name">پمپ آبیاری</div>
+                        <label class="toggle-switch ctrl-green">
+                            <input type="checkbox" onchange="toggleCtrl('pump',this)" disabled>
+                            <div class="toggle-track"></div>
+                            <div class="toggle-thumb"></div>
+                        </label>
+                    </div>
+
+                    <div class="control-item ctrl-purple" id="ctrl-led">
+                        <div class="control-icon">💡</div>
+                        <div class="control-name">LED رشد</div>
+                        <label class="toggle-switch ctrl-purple">
+                            <input type="checkbox" onchange="toggleCtrl('led',this)" disabled>
+                            <div class="toggle-track"></div>
+                            <div class="toggle-thumb"></div>
+                        </label>
+                    </div>
+
+                    <div class="control-item ctrl-cyan" id="ctrl-fan">
+                        <div class="control-icon">🌀</div>
+                        <div class="control-name">فن تهویه</div>
+                        <label class="toggle-switch ctrl-cyan">
+                            <input type="checkbox" onchange="toggleCtrl('fan',this)" disabled>
+                            <div class="toggle-track"></div>
+                            <div class="toggle-thumb"></div>
+                        </label>
+                    </div>
+
+                    <div class="control-item ctrl-red" id="ctrl-buz">
+                        <div class="control-icon">🔔</div>
+                        <div class="control-name">بیزر هشدار</div>
+                        <label class="toggle-switch ctrl-red">
+                            <input type="checkbox" onchange="toggleCtrl('alarm',this)" disabled>
+                            <div class="toggle-track"></div>
+                            <div class="toggle-thumb"></div>
+                        </label>
+                    </div>
+
+                    <div class="control-item ctrl-amber" id="ctrl-heater">
+                        <div class="control-icon">🔥</div>
+                        <div class="control-name">گرمایش</div>
+                        <label class="toggle-switch ctrl-amber">
+                            <input type="checkbox" onchange="toggleCtrl('heater',this)" disabled>
+                            <div class="toggle-track"></div>
+                            <div class="toggle-thumb"></div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Greenhouse Image -->
+            <div class="gh-image-panel">
+                <div class="card-header">
+                    <div class="card-title">📷 نمای گلخانه</div>
+                    <span style="font-size:9px;color:var(--text-dim)">تصویر زنده</span>
+                </div>
+                <div class="gh-image-wrap" id="gh-img-wrap">
+                    <img src="{% static 'dashboard/images/greenhouse.jpg' %}" alt="Greenhouse" id="gh-img">
+                </div>
+                <div class="gh-stats">
+                    <div class="gh-stat"><span class="gh-stat-icon">🌡️</span><div><div class="gh-stat-val" id="gs-temp">--</div><div class="gh-stat-lbl">دمای هوا</div></div></div>
+                    <div class="gh-stat"><span class="gh-stat-icon">💧</span><div><div class="gh-stat-val" id="gs-hum">--</div><div class="gh-stat-lbl">رطوبت</div></div></div>
+                    <div class="gh-stat"><span class="gh-stat-icon">🌱</span><div><div class="gh-stat-val" id="gs-soil">--</div><div class="gh-stat-lbl">رطوبت خاک</div></div></div>
+                    <div class="gh-stat"><span class="gh-stat-icon">☁️</span><div><div class="gh-stat-val" id="gs-co2">--</div><div class="gh-stat-lbl">CO₂</div></div></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- BOTTOM ROW -->
+    <div class="bottom-row">
+
+        <!-- Alerts -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">🚨 هشدارها</div>
+                <div class="alerts-header-actions">
+                    <span style="font-size:9px;color:var(--text-dim)" id="alert-count">۰ رویداد</span>
+                    <button class="btn-mark-all" onclick="markAllAlertsSeen()" id="mark-all-btn">
+                        ✓ همه را خوانده شد
+                    </button>
+                </div>
+            </div>
+            <div class="alerts-list" id="alerts-list">
+                <div style="text-align:center;padding:15px;color:var(--text-dim);font-size:11px;">
+                    در انتظار دریافت داده...
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Log -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">💾 ذخیره‌سازی داده</div>
+                <span class="badge ok">DataBase</span>
+            </div>
+            <div class="data-log-info">
+                <div class="log-stat">
+                    <div class="log-stat-lbl">کل رکوردها</div>
+                    <div class="log-stat-val" id="log-total">--</div>
+                </div>
+                <div class="log-stat">
+                    <div class="log-stat-lbl">فاصله ثبت</div>
+                    <div class="log-stat-val">۱ ثانیه</div>
+                </div>
+                <div class="log-stat">
+                    <div class="log-stat-lbl">اولین رکورد</div>
+                    <div class="log-stat-val" id="log-first">--</div>
+                </div>
+                <div class="log-stat">
+                    <div class="log-stat-lbl">آخرین رکورد</div>
+                    <div class="log-stat-val" id="log-last">--</div>
+                </div>
+            </div>
+            <div class="log-progress-wrap">
+                <div class="log-progress-label">
+                    <span>فضای DataBase</span>
+                    <span id="sd-usage">۰ GB / ۰ GB</span>
+                </div>
+                <div class="log-progress-bg"><div class="log-progress-fill" id="sd-fill" style="width:0%"></div></div>
+            </div>
+        </div>
+
+        <!-- WiFi + PICOW Config -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">📶 ارتباط WiFi</div>
+                <div class="signal-bars" id="signal-bars">
+                    <div class="signal-bar active"></div>
+                    <div class="signal-bar active"></div>
+                    <div class="signal-bar active"></div>
+                    <div class="signal-bar active"></div>
+                </div>
+            </div>
+            <div class="wifi-info">
+                <div class="wifi-row"><span class="lbl">ماژول</span><span class="val" id="wifi-module">PI PICO W (MicroPython)</span></div>
+                <div class="wifi-row"><span class="lbl">وضعیت</span><span class="val green" id="wifi-status-text">متصل ✓</span></div>
+                <div class="wifi-row"><span class="lbl">آدرس IP</span><span class="val cyan" id="wifi-ip">192.168.1.105</span></div>
+                <div class="wifi-row"><span class="lbl">داده ارسالی</span><span class="val" id="wifi-tx">۰ MB</span></div>
+                <div class="wifi-row"><span class="lbl">داده دریافتی</span><span class="val" id="wifi-rx">۰ MB</span></div>
+                <div class="wifi-row"><span class="lbl">پروتکل</span><span class="val">UART + HTTP</span></div>
+            </div>
+            
+            <!-- PICOW Configuration  -->
+            <div style="border-top:1px solid var(--border);padding:8px 12px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                    <span style="font-size:9px;color:var(--text-secondary);font-weight:600;letter-spacing:0.5px;text-transform:uppercase;">🔧 تنظیمات PICOW</span>
+                    <span id="picow-conn-status" style="font-size:9px;color:var(--text-dim);">در انتظار...</span>
+                </div>
+                <div class="picow-config" style="padding:0;">
+                    <div class="input-row">
+                        <input type="text" id="picow-ip-input" placeholder="آدرس IP PICOW" 
+                               value="{% firstof settings.ESP_IP '192.168.56.1' %}">
+                        <button onclick="updatePicowIp()" class="action-button">
+                            <span class="action-icon">📡</span>
+                            <span class="action-text">اتصال</span>
+                        </button>
+                        <button onclick="testPicowConnection()" class="action-button">
+                            <span class="action-icon">🔍</span>
+                            <span class="action-text">تست</span>
+                        </button>
+                    </div>
+                    <div id="picow-status" class="picow-status">
+                        ⏳ در حال بررسی اتصال...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">⚡ دسترسی سریع</div>
+            </div>
+            <div class="actions-grid">
+                <button class="action-button" onclick="refreshData()">
+                    <span class="action-icon">🔄</span>
+                    <span class="action-text">بروزرسانی</span>
+                </button>
+                <button class="action-button" onclick="exportCSV()">
+                    <span class="action-icon">📥</span>
+                    <span class="action-text">خروجی CSV</span>
+                </button>
+                <button class="action-button" onclick="openSettings()">
+                    <span class="action-icon">⚙️</span>
+                    <span class="action-text">تنظیمات</span>
+                </button>
+                <button class="action-button" onclick="openAlertSettings()">
+                    <span class="action-icon">🔔</span>
+                    <span class="action-text">هشدارها</span>
+                </button>
+                <button class="action-button" onclick="calibrate()">
+                    <span class="action-icon">🎯</span>
+                    <span class="action-text">کالیبراسیون</span>
+                </button>
+                <button class="action-button" onclick="viewLogs()">
+                    <span class="action-icon">📋</span>
+                    <span class="action-text">مشاهده لاگ</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Thresholds -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">🎯 آستانه‌های هشدار</div>
+            </div>
+            <div class="card-body" style="padding:8px 12px;">
+                <div class="sensor-item" style="padding:4px 0">
+                    <div style="flex:1;font-size:11px;color:var(--text-secondary)">دما — حداکثر</div>
+                    <div style="font-size:12px;font-weight:700;color:var(--accent-red)">30 °C</div>
+                </div>
+                <div class="sensor-item" style="padding:4px 0">
+                    <div style="flex:1;font-size:11px;color:var(--text-secondary)">رطوبت — حداکثر</div>
+                    <div style="font-size:12px;font-weight:700;color:var(--accent-amber)">80 %</div>
+                </div>
+                <div class="sensor-item" style="padding:4px 0">
+                    <div style="flex:1;font-size:11px;color:var(--text-secondary)">رطوبت خاک — حداقل</div>
+                    <div style="font-size:12px;font-weight:700;color:var(--accent-teal)">55 %</div>
+                </div>
+                <div class="sensor-item" style="padding:4px 0">
+                    <div style="flex:1;font-size:11px;color:var(--text-secondary)">CO₂ — حداکثر</div>
+                    <div style="font-size:12px;font-weight:700;color:var(--accent-amber)">1000 ppm</div>
+                </div>
+                <div class="sensor-item" style="padding:4px 0">
+                    <div style="flex:1;font-size:11px;color:var(--text-secondary)">نور — حداقل</div>
+                    <div style="font-size:12px;font-weight:700;color:#ffd740">1800 Lux</div>
+                </div>
+                <div class="sensor-item" style="padding:4px 0;border-bottom:none">
+                    <div style="flex:1;font-size:11px;color:var(--text-secondary)">گاز — حداکثر</div>
+                    <div style="font-size:12px;font-weight:700;color:var(--accent-red)">61.5 %</div>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /bottom-row -->
+</div><!-- /container -->
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ========================================
+// STATE MANAGEMENT
+// ========================================
+const state = {
+    temp: 0, hum: 0, soil: 0, co2: 0, lux: 0, gas: 0,
+    pump: false, led: false, fan: false, alarm: false, heater: false
+};
+
+// History buffers for charts
+const history = {
+    temp: [], hum: [], soil: [], co2: [], lux: [], gas: []
+};
+const HIST_LEN = 60;
+
+// Previous data for trend calculation
+let previousData = null;
+let alertCount = 0;
+let txMB = 0, rxMB = 0;
+let isAutoMode = true;
+let PICOW_IP = localStorage.getItem('picow_ip') || '192.168.56.1';
+let lastDataTime = Date.now();
+let isPicowConnected = false;
+let connectionCheckInterval = null;
+let picowCheckInProgress = false;
+let lastEventCount = 0;
+let audioContext = null;
+
+// ========================================
+// CLOCK
+// ========================================
+function updateClock() {
+    const now = new Date();
+    document.getElementById('clock').textContent = now.toLocaleTimeString('fa-IR');
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ========================================
+// REAL PICOW CONNECTION CHECK
+// ========================================
+function checkPicowConnection() {
+    if (picowCheckInProgress) return;
+    picowCheckInProgress = true;
+    
+    fetch('/api/get-actuator-status/')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            picowCheckInProgress = false;
+            
+            if (data.success) {
+                isPicowConnected = true;
+                lastDataTime = Date.now();
+                updatePicowStatus(true, data);
+                updateActuatorStatus(data);
+            } else {
+                isPicowConnected = false;
+                updatePicowStatus(false, data);
+            }
+        })
+        .catch(error => {
+            picowCheckInProgress = false;
+            isPicowConnected = false;
+            updatePicowStatus(false, { error: error.message });
+        });
+}
+
+function updatePicowStatus(connected, data) {
+    const statusText = document.getElementById('wifi-status-text');
+    const ipEl = document.getElementById('wifi-ip');
+    const bars = document.querySelectorAll('#signal-bars .signal-bar');
+    const wifiStatus = document.getElementById('wifi-status');
+    const sysStatus = document.getElementById('sys-status');
+    const connStatus = document.getElementById('picow-conn-status');
+    const statusEl = document.getElementById('picow-status');
+    const moduleEl = document.getElementById('wifi-module');
+    
+    if (connected) {
+        if (statusText) {
+            statusText.textContent = '✅ متصل';
+            statusText.className = 'val green';
+        }
+        if (ipEl) {
+            ipEl.textContent = data?.ip || PICOW_IP;
+            ipEl.className = 'val cyan';
+        }
+        if (moduleEl) {
+            moduleEl.textContent = 'PI PICO W (MicroPython) ✅';
+            moduleEl.style.color = 'var(--accent-green)';
+        }
+        if (wifiStatus) {
+            wifiStatus.style.display = 'flex';
+            wifiStatus.className = 'status-pill ok';
+            wifiStatus.querySelector('.status-dot').style.background = '#00e676';
+            wifiStatus.querySelector('span').textContent = 'PICOW متصل';
+        }
+        if (sysStatus) {
+            sysStatus.style.display = 'flex';
+            sysStatus.className = 'status-pill ok';
+            sysStatus.querySelector('.status-dot').style.background = '#00e676';
+            sysStatus.querySelector('span').textContent = 'همه سیستم‌ها فعال';
+        }
+        if (connStatus) {
+            connStatus.textContent = '✅ متصل';
+            connStatus.style.color = 'var(--accent-green)';
+        }
+        if (statusEl) {
+            statusEl.textContent = '✅ اتصال به PICOW برقرار است';
+            statusEl.className = 'picow-status success';
+        }
+        
+        bars.forEach((bar) => {
+            bar.className = 'signal-bar active';
+        });
+        
+        if (!isAutoMode) {
+            document.querySelectorAll('.controls-grid .toggle-switch input').forEach(input => {
+                input.disabled = false;
+                input.closest('.control-item').style.opacity = '1';
+            });
+        }
+    } else {
+        if (statusText) {
+            statusText.textContent = '❌ قطع';
+            statusText.className = 'val';
+            statusText.style.color = 'var(--accent-red)';
+        }
+        if (ipEl) {
+            ipEl.textContent = '--';
+            ipEl.className = 'val';
+        }
+        if (moduleEl) {
+            moduleEl.textContent = 'PI PICO W (MicroPython) ❌';
+            moduleEl.style.color = 'var(--accent-red)';
+        }
+        if (wifiStatus) {
+            wifiStatus.style.display = 'flex';
+            wifiStatus.className = 'status-pill danger';
+            wifiStatus.querySelector('.status-dot').style.background = 'var(--accent-red)';
+            wifiStatus.querySelector('span').textContent = 'قطع ارتباط';
+        }
+        if (sysStatus) {
+            sysStatus.style.display = 'flex';
+            sysStatus.className = 'status-pill danger';
+            sysStatus.querySelector('.status-dot').style.background = 'var(--accent-red)';
+            sysStatus.querySelector('span').textContent = 'ماژول قطع';
+        }
+        if (connStatus) {
+            connStatus.textContent = '❌ قطع';
+            connStatus.style.color = 'var(--accent-red)';
+        }
+        if (statusEl) {
+            const errorMsg = data?.error || 'PICOW در دسترس نیست';
+            statusEl.textContent = '❌ ' + errorMsg;
+            statusEl.className = 'picow-status error';
+        }
+        
+        bars.forEach((bar) => {
+            bar.className = 'signal-bar inactive';
+        });
+        
+        document.querySelectorAll('.controls-grid .toggle-switch input').forEach(input => {
+            input.disabled = true;
+            input.closest('.control-item').style.opacity = '0.5';
+        });
+    }
+}
+
+function updateActuatorStatus(data) {
+    if (!data || !data.actuators) return;
+    
+    const actuators = data.actuators;
+    const colorMap = {
+        'pump': '#00e676',
+        'light': '#aa00ff',
+        'fan': '#00bcd4',
+        'alarm': '#ff1744',
+        'heater': '#ffab00'
+    };
+    
+    const nameMap = {
+        'pump': 'pump',
+        'light': 'led',
+        'fan': 'fan',
+        'alarm': 'buz',
+        'heater': 'heater'
+    };
+    
+    Object.keys(actuators).forEach(key => {
+        const value = actuators[key];
+        const displayName = nameMap[key] || key;
+        const color = colorMap[key] || '#00e676';
+        
+        if (key === 'pump') state.pump = value;
+        else if (key === 'light') state.led = value;
+        else if (key === 'fan') state.fan = value;
+        else if (key === 'alarm') state.alarm = value;
+        else if (key === 'heater') state.heater = value;
+        
+        updateActuator(displayName, value, color);
+        updateControl('ctrl-' + displayName, value);
+        
+        const controlMap = {
+            'pump': 'ctrl-pump',
+            'led': 'ctrl-led',
+            'fan': 'ctrl-fan',
+            'buz': 'ctrl-buz',
+            'heater': 'ctrl-heater'
+        };
+        const controlId = controlMap[displayName];
+        if (controlId) {
+            const controlEl = document.getElementById(controlId);
+            if (controlEl) {
+                const checkbox = controlEl.querySelector('.toggle-switch input');
+                if (checkbox) {
+                    checkbox.checked = value;
+                }
+            }
+        }
+    });
+}
+
+// ========================================
+// FETCH SENSOR DATA
+// ========================================
+function fetchSensorData() {
+    fetch('{% url "embedded:get_sensor_data" %}')
+        .then(response => response.json())
+        .then(data => {
+            lastDataTime = Date.now();
+            
+            if (previousData) {
+                calculateTrends(previousData, data);
+            }
+            previousData = {...data};
+            
+            updateDashboard(data);
+            updateCharts(data);
+            updateLastUpdate();
+            
+            if (isPicowConnected) {
+                const actuatorData = {
+                    actuators: {
+                        pump: data.pump,
+                        light: data.light,
+                        fan: data.fan,
+                        alarm: data.alarm,
+                        heater: data.heater
+                    }
+                };
+                updateActuatorStatus(actuatorData);
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching sensor data:', error);
+        });
+}
+
+// ========================================
+// FETCH CHART HISTORY DATA
+// ========================================
+function fetchChartHistory(range) {
+    document.querySelectorAll('.chart-svg-wrap').forEach(el => {
+        el.innerHTML = `<div class="chart-loading"><span class="spinner"></span>در حال بارگذاری...</div>`;
+    });
+    
+    fetch(`{% url "embedded:get_sensor_history" %}?range=${range}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                showToast(data.message, 'warning');
+                document.querySelectorAll('.chart-svg-wrap').forEach(el => {
+                    el.innerHTML = `<div class="chart-loading">${data.message}</div>`;
+                });
+                return;
+            }
+            
+            if (!data.temp || data.temp.length === 0) {
+                showToast('داده‌ای برای نمایش وجود ندارد', 'warning');
+                document.querySelectorAll('.chart-svg-wrap').forEach(el => {
+                    el.innerHTML = `<div class="chart-loading">بدون داده</div>`;
+                });
+                return;
+            }
+            
+            history.temp = data.temp || [];
+            history.hum = data.hum || [];
+            history.soil = data.soil || [];
+            history.co2 = data.co2 || [];
+            history.lux = data.lux || [];
+            history.gas = data.gas || [];
+            
+            if (data._meta) {
+                console.log(`📊 نمودار ${range} ساعت:`, data._meta);
+            }
+            
+            drawAllCharts();
+            
+            if (history.temp.length > 0) {
+                const lastIdx = history.temp.length - 1;
+                document.getElementById('clbl-temp').textContent = history.temp[lastIdx].toFixed(1) + ' °C';
+                document.getElementById('clbl-hum').textContent = history.hum[lastIdx].toFixed(1) + ' %';
+                document.getElementById('clbl-soil').textContent = history.soil[lastIdx] + ' %';
+                document.getElementById('clbl-co2').textContent = history.co2[lastIdx] + ' ppm';
+                document.getElementById('clbl-lux').textContent = history.lux[lastIdx] + ' Lux';
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching chart history:', error);
+            showToast('خطا در دریافت تاریخچه نمودارها', 'error');
+        });
+}
+
+// ========================================
+// UPDATE DASHBOARD
+// ========================================
+function updateDashboard(data) {
+    state.temp = data.temperature || 0;
+    state.hum = data.humidity || 0;
+    state.soil = data.soil || 0;
+    state.gas = data.gas || 0;
+    state.lux = data.ldr || 0;
+    
+    if (!isPicowConnected) {
+        state.pump = data.pump || false;
+        state.led = data.light || false;
+        state.fan = data.fan || false;
+        state.alarm = data.alarm || false;
+        state.heater = data.heater || false;
+    }
+    
+    if (data.auto !== undefined) {
+        isAutoMode = data.auto;
+        const autoToggle = document.getElementById('auto-toggle');
+        if (autoToggle) {
+            autoToggle.checked = isAutoMode;
+            document.getElementById('mode-label').textContent = isAutoMode ? 'حالت: اتوماتیک' : 'حالت: دستی';
+            document.getElementById('mode-label').style.color = isAutoMode ? 'var(--accent-green)' : 'var(--accent-amber)';
+            
+            if (isPicowConnected) {
+                document.querySelectorAll('.controls-grid .toggle-switch input').forEach(input => {
+                    input.disabled = isAutoMode;
+                    if (isAutoMode) {
+                        input.closest('.control-item').style.opacity = '0.5';
+                    } else {
+                        input.closest('.control-item').style.opacity = '1';
+                    }
+                });
+            }
+        }
+    }
+    
+    state.co2 = Math.round(state.gas * 4.5 + 300);
+
+    setMetric('mv-temp', state.temp.toFixed(1));
+    setMetric('mv-hum', state.hum.toFixed(1));
+    setMetric('mv-soil', state.soil);
+    setMetric('mv-co2', state.co2);
+    setMetric('mv-lux', state.lux);
+    setMetric('mv-gas', state.gas);
+
+    setEl('sv-temp', state.temp.toFixed(1));
+    setEl('sv-hum', state.hum.toFixed(1));
+    setEl('sv-soil', state.soil);
+    setEl('sv-co2', state.co2);
+    setEl('sv-lux', state.lux);
+    setEl('sv-gas', state.gas);
+
+    setEl('clbl-temp', state.temp.toFixed(1) + ' °C');
+    setEl('clbl-hum', state.hum.toFixed(1) + ' %');
+    setEl('clbl-soil', state.soil + ' %');
+    setEl('clbl-co2', state.co2 + ' ppm');
+    setEl('clbl-lux', state.lux + ' Lux');
+
+    setEl('gs-temp', state.temp.toFixed(1) + ' °C');
+    setEl('gs-hum', state.hum.toFixed(1) + ' %');
+    setEl('gs-soil', state.soil + ' %');
+    setEl('gs-co2', state.co2 + ' ppm');
+
+    setBars(state.temp, state.hum, state.soil, state.co2, state.lux, state.gas);
+    updateBadges(state.temp, state.hum, state.soil, state.co2, state.lux, state.gas);
+    
+    if (!isPicowConnected) {
+        const colorMap = {
+            'pump': '#00e676',
+            'led': '#aa00ff',
+            'fan': '#00bcd4',
+            'buz': '#ff1744',
+            'heater': '#ffab00'
+        };
+        updateActuator('pump', state.pump, colorMap.pump);
+        updateActuator('led', state.led, colorMap.led);
+        updateActuator('fan', state.fan, colorMap.fan);
+        updateActuator('buz', state.alarm, colorMap.buz);
+        updateActuator('heater', state.heater, colorMap.heater);
+        updateControls(state.pump, state.led, state.fan, state.alarm, state.heater);
+    }
+    
+    updateSystemStatus(state.alarm || state.gas > 300 || state.temp > 35);
+}
+
+// ========================================
+// UPDATE CHARTS
+// ========================================
+function updateCharts(data) {
+    const values = {
+        temp: data.temperature || 0,
+        hum: data.humidity || 0,
+        soil: data.soil || 0,
+        co2: Math.round((data.gas || 0) * 4.5 + 300),
+        lux: data.ldr || 0,
+        gas: data.gas || 0
+    };
+    
+    for (const key of ['temp', 'hum', 'soil', 'co2', 'lux', 'gas']) {
+        history[key].push(values[key]);
+        if (history[key].length > HIST_LEN) history[key].shift();
+    }
+    
+    drawAllCharts();
+}
+
+// ========================================
+// DRAW CHARTS
+// ========================================
+function sparkline(containerId, data, color) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    
+    if (!data || data.length < 2) {
+        el.innerHTML = '';
+        return;
+    }
+    
+    const w = el.clientWidth || 200, h = 30;
+    const min = Math.min(...data), max = Math.max(...data);
+    const range = max - min || 1;
+    const pts = data.map((v, i) => {
+        const x = (i / (data.length - 1)) * w;
+        const y = h - ((v - min) / range) * (h - 4) - 2;
+        return `${x},${y}`;
+    }).join(' ');
+    el.innerHTML = `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+        <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linejoin="round"/>
+    </svg>`;
+}
+
+function drawChart(containerId, data, color, min, max) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    
+    if (!data || data.length < 2) {
+        el.innerHTML = `<div class="chart-loading">${data && data.length === 0 ? 'بدون داده' : 'در حال بارگذاری...'}</div>`;
+        return;
+    }
+    
+    if (min === undefined || max === undefined) {
+        min = Math.min(...data);
+        max = Math.max(...data);
+        if (min === max) {
+            min = min - 1;
+            max = max + 1;
+        }
+    }
+    
+    const w = el.clientWidth || 500, h = 50;
+    const range = max - min || 1;
+    const pts = data.map((v, i) => {
+        const x = (i / (data.length - 1)) * w;
+        const y = h - ((v - min) / range) * (h - 8) - 4;
+        return `${x},${y}`;
+    }).join(' ');
+    const lastPt = pts.split(' ').pop();
+    
+    el.innerHTML = `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+        <defs>
+            <linearGradient id="cg-${containerId}" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="${color}" stop-opacity="0.15"/>
+                <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
+            </linearGradient>
+        </defs>
+        <polyline points="${pts} ${w},${h} 0,${h}" fill="url(#cg-${containerId})" stroke="none"/>
+        <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.8" stroke-linejoin="round"/>
+        <circle cx="${lastPt.split(',')[0]}" cy="${lastPt.split(',')[1]}" r="2.5" fill="${color}"/>
+    </svg>`;
+}
+
+function drawAllCharts() {
+    sparkline('mc-temp-chart', history.temp.slice(-20), '#00e676');
+    sparkline('mc-hum-chart',  history.hum.slice(-20),  '#00bcd4');
+    sparkline('mc-soil-chart', history.soil.slice(-20), '#00bfa5');
+    sparkline('mc-co2-chart',  history.co2.slice(-20),  '#ffab00');
+    sparkline('mc-lux-chart',  history.lux.slice(-20),  '#ffd740');
+    sparkline('mc-gas-chart',  history.gas.slice(-20),  '#ff1744');
+
+    const getMinMax = (data, defaultMin, defaultMax) => {
+        if (!data || data.length === 0) return { min: defaultMin, max: defaultMax };
+        const min = Math.min(...data);
+        const max = Math.max(...data);
+        const range = max - min;
+        if (range < 1) {
+            return { min: min - 1, max: max + 1 };
+        }
+        return { min: min - range * 0.05, max: max + range * 0.05 };
+    };
+    
+    const tempRange = getMinMax(history.temp, 10, 45);
+    const humRange = getMinMax(history.hum, 0, 100);
+    const soilRange = getMinMax(history.soil, 0, 100);
+    const co2Range = getMinMax(history.co2, 200, 1500);
+    const luxRange = getMinMax(history.lux, 0, 1000);
+    
+    drawChart('chart-temp', history.temp, '#00e676', tempRange.min, tempRange.max);
+    drawChart('chart-hum',  history.hum,  '#00bcd4', humRange.min, humRange.max);
+    drawChart('chart-soil', history.soil, '#00bfa5', soilRange.min, soilRange.max);
+    drawChart('chart-co2',  history.co2,  '#ffab00', co2Range.min, co2Range.max);
+    drawChart('chart-lux',  history.lux,  '#ffd740', luxRange.min, luxRange.max);
+}
+
+// ========================================
+// HELPER FUNCTIONS
+// ========================================
+function setEl(id, val) {
+    const e = document.getElementById(id);
+    if (e) e.textContent = val;
+}
+
+function setMetric(id, val) {
+    const e = document.getElementById(id);
+    if (e) e.textContent = val;
+}
+
+function setBars(temp, hum, soil, co2, lux, gas) {
+    const set = (id, pct) => {
+        const e = document.getElementById(id);
+        if (e) e.style.width = Math.min(100, Math.max(0, pct)) + '%';
+    };
+    set('sb-temp', ((temp-10)/40)*100);
+    set('sb-hum',  hum);
+    set('sb-soil', soil);
+    set('sb-co2',  (co2/1500)*100);
+    set('sb-lux',  (lux/1000)*100);
+    set('sb-gas',  (gas/500)*100);
+}
+
+function updateBadges(temp, hum, soil, co2, lux, gas) {
+    setBadge('badge-temp', temp > 30 ? 'danger' : temp < 18 ? 'warn' : 'ok', temp > 30 ? 'بالا' : temp < 18 ? 'پایین' : 'نرمال');
+    setBadge('badge-hum', hum > 80 ? 'warn' : hum < 55 ? 'warn' : 'ok', hum > 80 ? 'زیاد' : hum < 55 ? 'کم' : 'نرمال');
+    setBadge('badge-soil', soil < 40 ? 'danger' : soil < 55 ? 'warn' : 'ok', soil < 40 ? 'خشک' : soil < 55 ? 'کم' : 'مناسب');
+    setBadge('badge-co2', co2 > 1000 ? 'warn' : 'ok', co2 > 1000 ? 'زیاد' : 'نرمال');
+    setBadge('badge-lux', lux < 1200 ? 'warn' : 'ok', lux < 1200 ? 'کم' : 'مناسب');
+    setBadge('badge-gas', gas >= 61 ? 'danger' : 'ok', gas >= 61 ? 'خطر' : 'نرمال');
+}
+
+function setBadge(id, cls, txt) {
+    const e = document.getElementById(id);
+    if (!e) return;
+    e.className = 'badge ' + cls;
+    e.textContent = txt;
+}
+
+// ========================================
+// UPDATE ACTUATORS
+// ========================================
+function updateActuator(name, on, color) {
+    const lbl = document.getElementById('act-'+name+'-lbl');
+    const badge = document.getElementById('act-'+name);
+    
+    if (lbl) {
+        lbl.textContent = on ? 'فعال' : 'غیرفعال';
+        lbl.style.color = on ? color : 'var(--text-dim)';
+    }
+    if (badge) {
+        badge.textContent = on ? 'ON' : 'OFF';
+        badge.className = on ? 'badge ok' : 'badge';
+        if (on) {
+            badge.style.cssText = '';
+            badge.style.background = color + '20';
+            badge.style.color = color;
+            badge.style.borderColor = color + '40';
+        } else {
+            badge.style.cssText = 'background:#1a1a1a;color:var(--text-dim);border-color:#333';
+        }
+    }
+}
+
+function updateControls(pump, led, fan, alarm, heater) {
+    updateControl('ctrl-pump', pump);
+    updateControl('ctrl-led', led);
+    updateControl('ctrl-fan', fan);
+    updateControl('ctrl-buz', alarm);
+    updateControl('ctrl-heater', heater);
+}
+
+function updateControl(id, on) {
+    const el = document.getElementById(id);
+    if (el) {
+        if (on) el.classList.add('active'); 
+        else el.classList.remove('active');
+    }
+}
+
+function calculateTrends(prev, curr) {
+    const trends = {
+        temp: curr.temperature - prev.temperature,
+        hum: curr.humidity - prev.humidity,
+        soil: curr.soil - prev.soil,
+        gas: curr.gas - prev.gas,
+        ldr: curr.ldr - prev.ldr
+    };
+    
+    const prevCo2 = Math.round(prev.gas * 4.5 + 300);
+    const currCo2 = Math.round(curr.gas * 4.5 + 300);
+    
+    updateTrend('mt-temp', trends.temp, '°C');
+    updateTrend('mt-hum', trends.hum, '%');
+    updateTrend('mt-soil', trends.soil, '%');
+    updateTrend('mt-gas', trends.gas, 'ppm');
+    updateTrend('mt-lux', trends.ldr, 'Lux');
+    updateTrend('mt-co2', currCo2 - prevCo2, 'ppm');
+}
+
+function updateTrend(elementId, change, unit) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    
+    const absChange = Math.abs(change);
+    if (absChange < 0.1) {
+        el.className = 'metric-trend trend-stable';
+        el.innerHTML = `━ پایدار`;
+    } else if (change > 0) {
+        el.className = 'metric-trend trend-up';
+        el.innerHTML = `▲ ${absChange.toFixed(1)}${unit}`;
+    } else {
+        el.className = 'metric-trend trend-down';
+        el.innerHTML = `▼ ${absChange.toFixed(1)}${unit}`;
+    }
+}
+
+function updateSystemStatus(hasAlarm) {
+    const sysStatus = document.getElementById('sys-status');
+    const alertStatus = document.getElementById('alert-status');
+    
+    if (hasAlarm) {
+        sysStatus.style.display = 'none';
+        alertStatus.style.display = 'flex';
+        alertStatus.className = 'status-pill danger';
+    } else {
+        sysStatus.style.display = 'flex';
+        alertStatus.style.display = 'none';
+    }
+}
+
+function updateLastUpdate() {
+    const now = new Date();
+    const time = now.toLocaleTimeString('fa-IR', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    });
+    const el = document.querySelector('.header-date');
+    if (el) el.textContent = 'آخرین بروزرسانی: ' + time;
+}
+
+// ========================================
+// TOGGLE CONTROLS
+// ========================================
+function toggleCtrl(name, el) {
+    if (isAutoMode) {
+        const currentState = getActuatorState(name);
+        el.checked = currentState;
+        showToast('⚠️ در حالت اتوماتیک نمی‌توانید کنترل کنید', 'warning');
+        return;
+    }
+    
+    if (!isPicowConnected) {
+        showToast('⚠️ PICOW در دسترس نیست', 'error');
+        el.checked = !el.checked;
+        return;
+    }
+    
+    const isChecked = el.checked;
+    
+    const actuatorMap = {
+        'pump': 'P',
+        'led': 'LI',
+        'fan': 'F',
+        'alarm': 'A',
+        'heater': 'HE'
+    };
+    
+    const espKey = actuatorMap[name] || name.toUpperCase();
+    
+    const colors = {
+        'pump': '#00e676',
+        'led': '#aa00ff',
+        'fan': '#00bcd4',
+        'alarm': '#ff1744',
+        'heater': '#ffab00'
+    };
+    
+    const btn = el.closest('.control-item');
+    if (btn) {
+        btn.style.opacity = '0.6';
+    }
+    
+    fetch('/api/send-command/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({
+            actuator: espKey,
+            status: isChecked ? 1 : 0
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (name === 'pump') state.pump = isChecked;
+            else if (name === 'led') state.led = isChecked;
+            else if (name === 'fan') state.fan = isChecked;
+            else if (name === 'alarm') state.alarm = isChecked;
+            else if (name === 'heater') state.heater = isChecked;
+            
+            updateActuator(name, isChecked, colors[name]);
+            updateControl('ctrl-' + name, isChecked);
+            showToast(`✅ ${getActuatorName(name)} ${isChecked ? 'فعال' : 'غیرفعال'} شد`, 'success');
+        } else {
+            showToast(`❌ خطا: ${data.error}`, 'error');
+            const prevState = !isChecked;
+            el.checked = prevState;
+            updateActuator(name, prevState, colors[name]);
+            updateControl('ctrl-' + name, prevState);
+        }
+    })
+    .catch(error => {
+        showToast(`❌ ${error.message || 'خطا در ارتباط با PICOW'}`, 'error');
+        const prevState = !isChecked;
+        el.checked = prevState;
+        updateActuator(name, prevState, colors[name]);
+        updateControl('ctrl-' + name, prevState);
+    })
+    .finally(() => {
+        if (btn) {
+            btn.style.opacity = '1';
+        }
+    });
+}
+
+function getActuatorState(name) {
+    const stateMap = {
+        'pump': state.pump,
+        'led': state.led,
+        'fan': state.fan,
+        'alarm': state.alarm,
+        'heater': state.heater
+    };
+    return stateMap[name] || false;
+}
+
+function getActuatorName(key) {
+    const names = {
+        'pump': 'پمپ',
+        'led': 'نور',
+        'fan': 'فن',
+        'alarm': 'آلارم',
+        'heater': 'هیتر'
+    };
+    return names[key] || key;
+}
+
+function getCSRFToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+           document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+}
+
+// ========================================
+// PICOW CONNECTION
+// ========================================
+function updatePicowIp() {
+    const input = document.getElementById('picow-ip-input');
+    if (input) {
+        PICOW_IP = input.value.trim();
+        localStorage.setItem('picow_ip', PICOW_IP);
+        showToast(`آدرس PICOW به ${PICOW_IP} تغییر یافت`, 'info');
+        testPicowConnection();
+    }
+}
+
+function testPicowConnection() {
+    const statusEl = document.getElementById('picow-status');
+    const connStatus = document.getElementById('picow-conn-status');
+    
+    if (statusEl) {
+        statusEl.textContent = '⏳ در حال تست اتصال...';
+        statusEl.className = 'picow-status warning';
+    }
+    if (connStatus) {
+        connStatus.textContent = '⏳ در حال اتصال...';
+        connStatus.style.color = 'var(--accent-amber)';
+    }
+    
+    fetch('/api/get-actuator-status/')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                isPicowConnected = true;
+                lastDataTime = Date.now();
+                updatePicowStatus(true, { ip: data.ip || PICOW_IP });
+                updateActuatorStatus(data);
+                showToast('✅ اتصال به PICOW برقرار است', 'success');
+            } else {
+                isPicowConnected = false;
+                updatePicowStatus(false, { error: data.error || 'PICOW در دسترس نیست' });
+                showToast(`❌ ${data.error || 'PICOW در دسترس نیست'}`, 'error');
+            }
+        })
+        .catch(error => {
+            isPicowConnected = false;
+            updatePicowStatus(false, { error: error.message || 'خطا در ارتباط با سرور' });
+            showToast(`❌ ${error.message || 'خطا در ارتباط با سرور'}`, 'error');
+        });
+}
+
+// ========================================
+// AUTO/MANUAL MODE
+// ========================================
+function toggleAutoMode(el) {
+    const isChecked = el.checked;
+    isAutoMode = isChecked;
+    
+    if (isPicowConnected) {
+        document.querySelectorAll('.controls-grid .toggle-switch input').forEach(input => {
+            input.disabled = isChecked;
+            if (isChecked) {
+                input.closest('.control-item').style.opacity = '0.5';
+            } else {
+                input.closest('.control-item').style.opacity = '1';
+            }
+        });
+    }
+    
+    document.getElementById('mode-label').textContent = isChecked ? 'حالت: اتوماتیک' : 'حالت: دستی';
+    document.getElementById('mode-label').style.color = isChecked ? 'var(--accent-green)' : 'var(--accent-amber)';
+    
+    fetch('/api/send-auto-mode/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({
+            auto: isChecked
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(`✅ حالت ${isChecked ? 'اتوماتیک' : 'دستی'} فعال شد`, 'success');
+        } else {
+            showToast(`❌ خطا: ${data.error}`, 'error');
+            el.checked = !isChecked;
+            isAutoMode = !isChecked;
+        }
+    })
+    .catch(error => {
+        showToast('❌ خطا در ارتباط با PICOW', 'error');
+        el.checked = !isChecked;
+        isAutoMode = !isChecked;
+    });
+}
+
+// ========================================
+// QUICK ACTIONS
+// ========================================
+function refreshData() { 
+    fetchSensorData(); 
+    checkPicowConnection();
+    showToast('داده‌ها بروزرسانی شدند', 'info');
+}
+function exportCSV() { showToast('فایل CSV آماده دانلود', 'success'); }
+function openSettings() { showToast('تنظیمات سیستم', 'info'); }
+function openAlertSettings() { showToast('تنظیمات هشدار', 'info'); }
+function calibrate() { showToast('کالیبراسیون سنسورها...', 'warning'); }
+function viewLogs() { showToast('مشاهده لاگ‌های سیستم', 'info'); }
+
+// ========================================
+// TOAST SYSTEM
+// ========================================
+function showToast(message, type = 'info', duration = 4000) {
+    const container = document.getElementById('toastContainer') || createToastContainer();
+    
+    const icons = {
+        success: 'fa-check-circle',
+        error: 'fa-times-circle',
+        warning: 'fa-exclamation-triangle',
+        info: 'fa-info-circle'
+    };
+    
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    const iconColor = type === 'success' ? 'var(--accent-green)' : 
+                      type === 'error' ? 'var(--accent-red)' : 
+                      type === 'warning' ? 'var(--accent-amber)' : 'var(--accent-cyan)';
+    toast.innerHTML = `
+        <i class="fas ${icons[type] || icons.info} toast-icon" style="color:${iconColor}"></i>
+        <span class="toast-message">${message}</span>
+        <button class="toast-close">&times;</button>
+    `;
+    
+    container.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(20px)';
+        setTimeout(() => {
+            toast.remove();
+        }, 300);
+    }, duration);
+    
+    toast.querySelector('.toast-close').addEventListener('click', function() {
+        toast.remove();
+    });
+}
+
+function createToastContainer() {
+    const container = document.createElement('div');
+    container.id = 'toastContainer';
+    container.className = 'toast-container';
+    document.body.appendChild(container);
+    return container;
+}
+
+// ========================================
+// WIFI COUNTER
+// ========================================
+function updateWifi() {
+    txMB += Math.random() * 0.005;
+    rxMB += Math.random() * 0.003;
+    setEl('wifi-tx', txMB.toFixed(2) + ' MB');
+    setEl('wifi-rx', rxMB.toFixed(2) + ' MB');
+}
+
+// ========================================
+// CHART RANGE
+// ========================================
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        const range = this.dataset.range;
+        fetchChartHistory(range);
+    });
+});
+
+// ========================================
+// EVENT SYSTEM
+// ========================================
+function fetchEvents(showToast = true) {
+    fetch('{% url "embedded:get_events" %}?limit=20')
+        .then(response => response.json())
+        .then(data => {
+            if (data.events && data.events.length > 0) {
+                renderEvents(data.events);
+                
+                if (data.events.length > lastEventCount) {
+                    const newEvents = data.events.slice(0, data.events.length - lastEventCount);
+                    newEvents.forEach(event => {
+                        if (!event.seen) {
+                            showEventToast(event);
+                            playAlertSound(event.level);
+                            sendBrowserNotification(event);
+                        }
+                    });
+                }
+                
+                lastEventCount = data.events.length;
+                
+                document.getElementById('alert-count').textContent = 
+                    `${data.unseen_count} هشدار جدید`;
+                
+                if (data.unseen_count > 0) {
+                    document.querySelector('.header-center .status-pill.warn').style.display = 'flex';
+                    document.querySelector('.header-center .status-pill.ok').style.display = 'none';
+                } else {
+                    document.querySelector('.header-center .status-pill.warn').style.display = 'none';
+                    document.querySelector('.header-center .status-pill.ok').style.display = 'flex';
+                }
+                
+                const markBtn = document.getElementById('mark-all-btn');
+                if (markBtn) {
+                    markBtn.style.display = data.unseen_count > 0 ? 'inline-block' : 'none';
+                }
+            }
+        })
+        .catch(error => console.error('Error fetching events:', error));
+}
+
+function renderEvents(events) {
+    const list = document.getElementById('alerts-list');
+    if (!list) return;
+    
+    list.innerHTML = '';
+    
+    events.forEach(event => {
+        const item = document.createElement('div');
+        item.className = 'alert-item';
+        if (!event.seen) {
+            item.style.borderRight = `3px solid ${getLevelColor(event.level)}`;
+        }
+        
+        const time = new Date(event.created);
+        const timeStr = time.toLocaleTimeString('fa-IR', {hour:'2-digit',minute:'2-digit'});
+        
+        const dotColor = getLevelColor(event.level);
+        
+        item.innerHTML = `
+            <div class="alert-dot" style="background:${dotColor};box-shadow:0 0 10px ${dotColor}55"></div>
+            <div class="alert-msg">
+                <strong>${event.title}</strong>
+                <small style="display:block;color:var(--text-secondary);font-size:9px;">${event.message}</small>
+            </div>
+            <div class="alert-time">${timeStr}</div>
+            ${!event.seen ? '<span style="font-size:7px;color:var(--accent-cyan);">●</span>' : ''}
+        `;
+        
+        item.style.cursor = 'pointer';
+        item.addEventListener('click', function() {
+            markEventSeen(event.id);
+            this.querySelector('.alert-time').after(' ✓');
+            this.style.opacity = '0.5';
+            const countEl = document.getElementById('alert-count');
+            if (countEl) {
+                const current = parseInt(countEl.textContent) || 0;
+                countEl.textContent = Math.max(0, current - 1) + ' هشدار جدید';
+            }
+        });
+        
+        list.appendChild(item);
+    });
+}
+
+function getLevelColor(level) {
+    const colors = {
+        'critical': '#ff1744',
+        'warning': '#ffab00',
+        'success': '#00e676',
+        'info': '#00bcd4'
+    };
+    return colors[level] || '#78909c';
+}
+
+function showEventToast(event) {
+    const levelMap = {
+        'critical': 'error',
+        'warning': 'warning',
+        'success': 'success',
+        'info': 'info'
+    };
+    showToast(event.message, levelMap[event.level] || 'info', 5000);
+}
+
+function sendBrowserNotification(event) {
+    if (!('Notification' in window)) return;
+    
+    if (Notification.permission === 'granted') {
+        const levelEmojis = {
+            'critical': '🔴',
+            'warning': '🟠',
+            'success': '🟢',
+            'info': '🔵'
+        };
+        
+        new Notification(`${levelEmojis[event.level] || '📢'} ${event.title}`, {
+            body: event.message,
+            icon: '/static/dashboard/images/icon.png',
+            tag: event.id,
+            requireInteraction: event.level === 'critical',
+        });
+    } else if (Notification.permission !== 'denied') {
+        Notification.requestPermission();
+    }
+}
+
+function playAlertSound(level) {
+    if (level === 'critical' || level === 'warning') {
+        try {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = level === 'critical' ? 800 : 600;
+            oscillator.type = 'square';
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.5);
+            
+            if (level === 'critical') {
+                setTimeout(() => {
+                    const osc2 = audioContext.createOscillator();
+                    const gain2 = audioContext.createGain();
+                    osc2.connect(gain2);
+                    gain2.connect(audioContext.destination);
+                    osc2.frequency.value = 1000;
+                    osc2.type = 'square';
+                    gain2.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    gain2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                    osc2.start(audioContext.currentTime + 0.3);
+                    osc2.stop(audioContext.currentTime + 0.8);
+                }, 300);
+            }
+        } catch (e) {
+            console.log('Audio not supported');
+        }
+    }
+}
+
+function markEventSeen(eventId) {
+    fetch('{% url "embedded:mark_event_seen" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({
+            event_id: eventId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const countEl = document.getElementById('alert-count');
+            if (countEl) {
+                const current = parseInt(countEl.textContent) || 0;
+                countEl.textContent = Math.max(0, current - 1) + ' هشدار جدید';
+            }
+
+            const markBtn = document.getElementById('mark-all-btn');
+            if (markBtn) {
+                const unseenItems = document.querySelectorAll('.alert-item:not([style*="opacity: 0.5"])');
+                markBtn.style.display = unseenItems.length > 0 ? 'inline-block' : 'none';
+            }
+        }
+    })
+    .catch(error => console.error('Error marking event seen:', error));
+}
+
+function markAllAlertsSeen() {
+    const unseenItems = document.querySelectorAll('.alert-item:not([style*="opacity: 0.5"])');
+    if (unseenItems.length === 0) {
+        showToast('هیچ هشدار خوانده نشده‌ای وجود ندارد', 'info');
+        return;
+    }
+    
+    const eventIds = [];
+    unseenItems.forEach(item => {
+        const eventId = item.dataset.eventId || null;
+        if (eventId) eventIds.push(eventId);
+    });
+    
+    fetch('{% url "embedded:mark_event_seen" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({
+            mark_all: true
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            unseenItems.forEach(item => {
+                item.style.opacity = '0.5';
+                const timeEl = item.querySelector('.alert-time');
+                if (timeEl) {
+                    timeEl.after(' ✓');
+                }
+                const dot = item.querySelector('.alert-dot');
+                if (dot) {
+                    dot.style.background = '#455a64';
+                    dot.style.boxShadow = 'none';
+                }
+                const newIndicator = item.querySelector('span:last-child');
+                if (newIndicator && newIndicator.textContent === '●') {
+                    newIndicator.remove();
+                }
+            });
+            
+            document.getElementById('alert-count').textContent = '۰ هشدار جدید';
+            document.getElementById('mark-all-btn').style.display = 'none';
+            
+            document.querySelector('.header-center .status-pill.warn').style.display = 'none';
+            document.querySelector('.header-center .status-pill.ok').style.display = 'flex';
+            
+            showToast(`✅ ${data.count || unseenItems.length} هشدار خوانده شد`, 'success');
+        } else {
+            showToast(`❌ خطا: ${data.error || 'مشکل در علامت‌گذاری'}`, 'error');
+        }
+    })
+    .catch(error => {
+        showToast('❌ خطا در ارتباط با سرور', 'error');
+        console.error('Error marking all events seen:', error);
+    });
+}
+
+// ========================================
+// FETCH LOG STATS
+// ========================================
+function fetchLogStats() {
+    fetch('{% url "embedded:get_log_stats" %}')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('log-total').textContent = data.total_records || '0';
+            document.getElementById('log-first').textContent = data.first_record || '--';
+            document.getElementById('log-last').textContent = data.last_record || '--';
+            document.getElementById('sd-usage').textContent = data.sd_usage || '0 GB / 0 GB';
+            
+            const fill = document.getElementById('sd-fill');
+            if (fill) {
+                fill.style.width = Math.min(100, data.sd_percent || 0) + '%';
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching log stats:', error);
+        });
+}
+
+// ========================================
+// KEYBOARD SHORTCUTS
+// ========================================
+document.addEventListener('keydown', function(e) {
+    if ((e.key === 'r' || e.key === 'R') && !e.ctrlKey && !e.metaKey) {
+        if (!e.target.closest('input, textarea, button')) {
+            e.preventDefault();
+            refreshData();
+        }
+    }
+});
+
+// ========================================
+// RESIZE HANDLER
+// ========================================
+let resizeTimeout;
+window.addEventListener('resize', function() {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(drawAllCharts, 200);
+});
+
+// ========================================
+// INIT
+// ========================================
+document.addEventListener('DOMContentLoaded', function() {
+    const input = document.getElementById('picow-ip-input');
+    if (input) {
+        input.value = localStorage.getItem('picow_ip') || '192.168.56.1';
+    }
+    
+    fetchSensorData();
+    fetchChartHistory(6);
+    
+    setTimeout(checkPicowConnection, 1000);
+    
+    setInterval(fetchSensorData, 5000);
+    setInterval(checkPicowConnection, 10000); 
+    setInterval(updateWifi, 5000);
+    
+    if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+    }
+    
+    fetchEvents(false);
+    setInterval(fetchEvents, 5000);
+    
+    fetchLogStats();
+    setInterval(fetchLogStats, 30000);
+    
+    setTimeout(() => {
+        if (isAutoMode) {
+            document.querySelectorAll('.controls-grid .toggle-switch input').forEach(input => {
+                input.disabled = true;
+                input.closest('.control-item').style.opacity = '0.5';
+            });
+        }
+    }, 1000);
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                mutation.addedNodes.forEach(function(node) {
+                    if (node.classList && node.classList.contains('alert-item')) {
+                        const timeEl = node.querySelector('.alert-time');
+                        if (timeEl) {
+                            const eventId = node.dataset.eventId || null;
+                            if (eventId) {
+                                node.dataset.eventId = eventId;
+                            }
+                        }
+                    }
+                });
+            });
+        });
+        
+        const list = document.getElementById('alerts-list');
+        if (list) {
+            observer.observe(list, { childList: true, subtree: true });
+        }
+    });
+    
+    console.log('✅ Greenhouse Dashboard initialized');
+});
+</script>
+{% endblock %}

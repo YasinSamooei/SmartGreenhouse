@@ -1,0 +1,2 @@
+../Core/Modules/Src/rgb_led.c:8:6:RGB_Init	1
+../Core/Modules/Src/rgb_led.c:17:6:RGB_SetHumidity	3

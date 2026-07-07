@@ -1,0 +1,4 @@
+../Core/Modules/Src/esp_uart.c:9:6:ESP_UART_Init	1
+../Core/Modules/Src/esp_uart.c:14:9:ESP_UART_IsBusy	1
+../Core/Modules/Src/esp_uart.c:19:19:ESP_UART_Send	2
+../Core/Modules/Src/esp_uart.c:38:6:HAL_UART_TxCpltCallback	2

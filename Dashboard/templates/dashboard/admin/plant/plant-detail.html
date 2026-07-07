@@ -1,0 +1,983 @@
+{% extends 'dashboard/admin/base.html' %}
+{% load static %}
+
+{% block title %}جزئیات گیاه{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ========================================
+       PLANT DETAIL SPECIFIC STYLES
+       ======================================== */
+    .detail-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        margin-top: 20px;
+    }
+
+    @media (max-width: 992px) {
+        .detail-container {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* ========================================
+       IMAGE CARD
+       ======================================== */
+    .image-card {
+        background: var(--dark-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        overflow: hidden;
+        transition: var(--transition);
+        position: relative;
+    }
+
+    .image-card:hover {
+        border-color: var(--primary);
+        box-shadow: var(--shadow-glow);
+    }
+
+    .image-wrapper {
+        position: relative;
+        background: var(--dark);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        min-height: 400px;
+    }
+
+    .plant-detail-image {
+        max-width: 100%;
+        max-height: 450px;
+        object-fit: contain;
+        border-radius: var(--radius-sm);
+        transition: var(--transition-slow);
+    }
+
+    .plant-detail-image:hover {
+        transform: scale(1.02);
+    }
+
+    /* Image Badges */
+    .image-badges {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .image-badge {
+        padding: 6px 16px;
+        border-radius: 50px;
+        font-size: 12px;
+        font-weight: 600;
+        color: white;
+        backdrop-filter: blur(10px);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .image-badge.healthy {
+        background: rgba(0, 230, 118, 0.85);
+    }
+
+    .image-badge.sick {
+        background: rgba(255, 23, 68, 0.85);
+    }
+
+    .image-badge.accuracy {
+        background: rgba(108, 60, 225, 0.85);
+    }
+
+    /* Image Actions */
+    .image-actions {
+        display: flex;
+        gap: 8px;
+        padding: 12px 20px;
+        background: var(--dark);
+        border-top: 1px solid var(--border-color);
+        flex-wrap: wrap;
+    }
+
+    .btn-image-action {
+        padding: 8px 16px;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        background: transparent;
+        color: var(--text-secondary);
+        font-family: inherit;
+        font-size: 13px;
+        cursor: pointer;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .btn-image-action:hover {
+        background: var(--dark-card-hover);
+        border-color: var(--primary);
+        color: var(--text-primary);
+    }
+
+    .btn-image-action i {
+        font-size: 16px;
+    }
+
+    /* ========================================
+       INFO CARD
+       ======================================== */
+    .info-card {
+        background: var(--dark-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        overflow: hidden;
+        transition: var(--transition);
+    }
+
+    .info-card:hover {
+        border-color: var(--primary);
+        box-shadow: var(--shadow-glow);
+    }
+
+    .info-header {
+        padding: 18px 24px;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .info-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+
+    .info-title i {
+        color: var(--primary);
+        font-size: 22px;
+    }
+
+    .info-status {
+        padding: 4px 16px;
+        border-radius: 50px;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .info-status.healthy {
+        background: rgba(0, 230, 118, 0.15);
+        color: var(--success);
+    }
+
+    .info-status.sick {
+        background: rgba(255, 23, 68, 0.15);
+        color: var(--danger);
+    }
+
+    .info-body {
+        padding: 20px 24px;
+    }
+
+    /* Info Items */
+    .info-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 14px 0;
+        border-bottom: 1px solid var(--border-color);
+        gap: 12px;
+    }
+
+    .info-item:last-child {
+        border-bottom: none;
+    }
+
+    .info-label {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--text-secondary);
+        font-size: 14px;
+    }
+
+    .info-label i {
+        width: 20px;
+        font-size: 16px;
+        color: var(--text-muted);
+    }
+
+    .info-value {
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 15px;
+        text-align: left;
+        word-break: break-word;
+        max-width: 60%;
+    }
+
+    .info-value.highlight {
+        color: var(--primary);
+    }
+
+    .info-value.success {
+        color: var(--success);
+    }
+
+    .info-value.danger {
+        color: var(--danger);
+    }
+
+    .info-value.warning {
+        color: var(--warning);
+    }
+
+    /* Accuracy Progress */
+    .accuracy-section {
+        margin-top: 16px;
+        padding: 16px;
+        background: var(--dark);
+        border-radius: var(--radius-sm);
+    }
+
+    .accuracy-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+
+    .accuracy-header .label {
+        font-size: 13px;
+        color: var(--text-secondary);
+    }
+
+    .accuracy-header .value {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--primary);
+    }
+
+    .accuracy-bar {
+        height: 8px;
+        background: var(--border-color);
+        border-radius: 4px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .accuracy-bar-fill {
+        height: 100%;
+        border-radius: 4px;
+        background: var(--gradient-primary);
+        transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+        width: 0%;
+    }
+
+    .accuracy-bar-fill.animated {
+        width: var(--accuracy-percent);
+    }
+
+    /* ========================================
+       ACTION BUTTONS
+       ======================================== */
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        padding: 16px 24px 24px;
+        flex-wrap: wrap;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .btn-action {
+        padding: 10px 24px;
+        border: none;
+        border-radius: var(--radius-sm);
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+    }
+
+    .btn-action i {
+        font-size: 16px;
+    }
+
+    .btn-action.primary {
+        background: var(--gradient-primary);
+        color: white;
+    }
+
+    .btn-action.primary:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-glow);
+    }
+
+    .btn-action.outline {
+        background: transparent;
+        border: 1px solid var(--border-color);
+        color: var(--text-secondary);
+    }
+
+    .btn-action.outline:hover {
+        border-color: var(--primary);
+        color: var(--text-primary);
+        background: var(--dark);
+    }
+
+    .btn-action.danger {
+        background: rgba(255, 23, 68, 0.15);
+        color: var(--danger);
+    }
+
+    .btn-action.danger:hover {
+        background: var(--danger);
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    /* ========================================
+       PROBLEM DETAILS SECTION
+       ======================================== */
+    .problem-section {
+        margin-top: 16px;
+        padding: 16px 20px;
+        background: rgba(255, 23, 68, 0.05);
+        border: 1px solid rgba(255, 23, 68, 0.2);
+        border-radius: var(--radius-sm);
+    }
+
+    .problem-section .problem-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--danger);
+        font-weight: 600;
+        font-size: 15px;
+        margin-bottom: 6px;
+    }
+
+    .problem-section .problem-title i {
+        font-size: 18px;
+    }
+
+    .problem-section .problem-text {
+        color: var(--text-secondary);
+        font-size: 14px;
+        line-height: 1.7;
+    }
+
+    /* ========================================
+       RESPONSIVE
+       ======================================== */
+    @media (max-width: 768px) {
+        .detail-container {
+            gap: 16px;
+        }
+
+        .image-wrapper {
+            min-height: 250px;
+            padding: 12px;
+        }
+
+        .plant-detail-image {
+            max-height: 300px;
+        }
+
+        .info-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .info-item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 4px;
+        }
+
+        .info-value {
+            max-width: 100%;
+            text-align: right;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+        }
+
+        .btn-action {
+            justify-content: center;
+        }
+
+        .image-badges {
+            top: 10px;
+            right: 10px;
+        }
+
+        .image-badge {
+            font-size: 10px;
+            padding: 4px 12px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .image-wrapper {
+            min-height: 200px;
+        }
+
+        .plant-detail-image {
+            max-height: 220px;
+        }
+
+        .info-body {
+            padding: 14px 16px;
+        }
+
+        .info-item {
+            padding: 10px 0;
+        }
+
+        .accuracy-header .value {
+            font-size: 16px;
+        }
+    }
+
+    /* ========================================
+       ANIMATIONS
+       ======================================== */
+    @keyframes fadeInScale {
+        from {
+            opacity: 0;
+            transform: scale(0.95);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    .detail-container .image-card {
+        animation: fadeInScale 0.4s ease both;
+        animation-delay: 0.1s;
+    }
+
+    .detail-container .info-card {
+        animation: fadeInScale 0.4s ease both;
+        animation-delay: 0.2s;
+    }
+
+    /* ========================================
+       PRINT STYLES
+       ======================================== */
+    @media print {
+        .dashboard-header,
+        .dashboard-sidebar,
+        .action-buttons,
+        .image-actions {
+            display: none !important;
+        }
+
+        .main-content {
+            margin-right: 0 !important;
+            padding: 0 !important;
+        }
+
+        .detail-container {
+            display: block !important;
+        }
+
+        .image-card,
+        .info-card {
+            border: 1px solid #ddd !important;
+            box-shadow: none !important;
+            break-inside: avoid;
+            margin-bottom: 20px;
+        }
+
+        .plant-detail-image {
+            max-height: 300px !important;
+        }
+
+        .accuracy-bar-fill {
+            background: #6C3CE1 !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block main %}
+<div class="page-header">
+    <div class="header-content">
+        <h3 class="page-title">
+            <i class="fas fa-seedling page-icon"></i>
+            جزئیات گیاه
+        </h3>
+        <div class="breadcrumb">
+            <a href="{% url 'panel:home' %}" class="breadcrumb-link">داشبورد</a>
+            <i class="fas fa-chevron-left"></i>
+            <a href="{% url 'panel:plant-list' %}" class="breadcrumb-link">لیست گیاهان</a>
+            <i class="fas fa-chevron-left"></i>
+            <span class="current">جزئیات</span>
+        </div>
+    </div>
+</div>
+
+<div class="detail-container">
+    <!-- Image Card -->
+    <div class="image-card">
+        <div class="image-wrapper">
+            <img src="{{ object.image.url }}" 
+                 alt="{{ object.name }}" 
+                 class="plant-detail-image"
+                 id="plantImage"
+                 loading="lazy">
+            
+            <!-- Badges -->
+            <div class="image-badges">
+                {% if object.healthy %}
+                <span class="image-badge healthy">
+                    <i class="fas fa-check-circle"></i> سالم
+                </span>
+                {% else %}
+                <span class="image-badge sick">
+                    <i class="fas fa-exclamation-circle"></i> بیمار
+                </span>
+                {% endif %}
+                <span class="image-badge accuracy">
+                    <i class="fas fa-percentage"></i> {{ object.accuracy }}%
+                </span>
+            </div>
+        </div>
+
+        <!-- Image Actions -->
+        <div class="image-actions">
+            <button class="btn-image-action" id="zoomImage" title="بزرگنمایی">
+                <i class="fas fa-search-plus"></i>
+                بزرگنمایی
+            </button>
+            <button class="btn-image-action" id="downloadImage" title="دانلود تصویر">
+                <i class="fas fa-download"></i>
+                دانلود
+            </button>
+            <button class="btn-image-action" id="fullscreenImage" title="تمام صفحه">
+                <i class="fas fa-expand"></i>
+                تمام صفحه
+            </button>
+        </div>
+    </div>
+
+    <!-- Info Card -->
+    <div class="info-card">
+        <div class="info-header">
+            <div class="info-title">
+                <i class="fas fa-info-circle"></i>
+                اطلاعات گیاه
+            </div>
+            <span class="info-status {% if object.healthy %}healthy{% else %}sick{% endif %}">
+                <i class="fas {% if object.healthy %}fa-check-circle{% else %}fa-exclamation-circle{% endif %}"></i>
+                {% if object.healthy %}سالم{% else %}بیمار{% endif %}
+            </span>
+        </div>
+
+        <div class="info-body">
+            <!-- ID -->
+            <div class="info-item">
+                <span class="info-label">
+                    <i class="fas fa-hashtag"></i>
+                    شناسه
+                </span>
+                <span class="info-value highlight">#{{ object.pk }}</span>
+            </div>
+
+            <!-- Name -->
+            <div class="info-item">
+                <span class="info-label">
+                    <i class="fas fa-tag"></i>
+                    نام گیاه
+                </span>
+                <span class="info-value success">{{ object.name }}</span>
+            </div>
+
+            <!-- Health Status -->
+            <div class="info-item">
+                <span class="info-label">
+                    <i class="fas fa-heartbeat"></i>
+                    وضعیت سلامت
+                </span>
+                <span class="info-value {% if object.healthy %}success{% else %}danger{% endif %}">
+                    {% if object.healthy %}
+                    <i class="fas fa-check-circle"></i> سالم
+                    {% else %}
+                    <i class="fas fa-exclamation-triangle"></i> بیمار
+                    {% endif %}
+                </span>
+            </div>
+
+            <!-- Problem (if exists) -->
+            {% if object.problem %}
+            <div class="info-item">
+                <span class="info-label">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    مشکل تشخیص داده شده
+                </span>
+                <span class="info-value danger">{{ object.problem }}</span>
+            </div>
+            {% endif %}
+
+            <!-- Created Date -->
+            <div class="info-item">
+                <span class="info-label">
+                    <i class="fas fa-calendar-alt"></i>
+                    تاریخ ثبت
+                </span>
+                <span class="info-value">{{ object.created|date:"Y/m/d H:i" }}</span>
+            </div>
+
+            <!-- Accuracy -->
+            <div class="info-item">
+                <span class="info-label">
+                    <i class="fas fa-bullseye"></i>
+                    دقت تشخیص
+                </span>
+                <span class="info-value highlight">{{ object.accuracy }}%</span>
+            </div>
+
+            <!-- Accuracy Progress Bar -->
+            <div class="accuracy-section">
+                <div class="accuracy-header">
+                    <span class="label">دقت تشخیص</span>
+                    <span class="value">{{ object.accuracy }}%</span>
+                </div>
+                <div class="accuracy-bar">
+                    <div class="accuracy-bar-fill" 
+                         id="accuracyFill"
+                         style="--accuracy-percent: {{ object.accuracy }}%;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Problem Details (if exists) -->
+            {% if object.problem %}
+            <div class="problem-section">
+                <div class="problem-title">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    جزئیات مشکل
+                </div>
+                <p class="problem-text">
+                    {{ object.problem }}
+                </p>
+                <div style="margin-top: 8px; font-size: 13px; color: var(--text-muted);">
+                    <i class="fas fa-lightbulb"></i>
+                    توصیه: برای درمان این مشکل با یک متخصص گیاه‌پزشکی مشورت کنید.
+                </div>
+            </div>
+            {% else %}
+            <div style="margin-top: 16px; padding: 12px 16px; background: rgba(0, 230, 118, 0.05); border: 1px solid rgba(0, 230, 118, 0.2); border-radius: var(--radius-sm);">
+                <div style="display: flex; align-items: center; gap: 8px; color: var(--success); font-weight: 600;">
+                    <i class="fas fa-check-circle"></i>
+                    گیاه سالم
+                </div>
+                <p style="color: var(--text-secondary); font-size: 13px; margin-top: 4px;">
+                    این گیاه هیچ مشکلی ندارد و در وضعیت سلامتی کامل قرار دارد.
+                </p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <a href="{% url 'panel:plant-list' %}" class="btn-action outline">
+                <i class="fas fa-arrow-right"></i>
+                بازگشت به لیست
+            </a>
+            <a href="{% url 'panel:plant-delete' object.id %}" 
+               class="btn-action danger"
+               onclick="return confirm('آیا از حذف این گیاه مطمئن هستید؟')">
+                <i class="fas fa-trash"></i>
+                حذف گیاه
+            </a>
+            <button class="btn-action primary" id="sharePlant">
+                <i class="fas fa-share-alt"></i>
+                اشتراک‌گذاری
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // ========================================
+    // ACCURACY BAR ANIMATION
+    // ========================================
+    function animateAccuracyBar() {
+        const fill = document.getElementById('accuracyFill');
+        if (fill) {
+            // Small delay to ensure the animation triggers
+            setTimeout(() => {
+                fill.classList.add('animated');
+            }, 300);
+        }
+    }
+
+    // Run animation on load
+    animateAccuracyBar();
+
+    // Re-run animation when tab becomes visible
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) {
+            const fill = document.getElementById('accuracyFill');
+            if (fill) {
+                fill.classList.remove('animated');
+                setTimeout(() => {
+                    fill.classList.add('animated');
+                }, 100);
+            }
+        }
+    });
+
+    // ========================================
+    // ZOOM IMAGE
+    // ========================================
+    $('#zoomImage').on('click', function() {
+        const img = document.getElementById('plantImage');
+        if (img) {
+            if (img.style.transform === 'scale(1.5)') {
+                img.style.transform = 'scale(1)';
+                img.style.transition = 'transform 0.3s ease';
+                $(this).html('<i class="fas fa-search-plus"></i> بزرگنمایی');
+            } else {
+                img.style.transform = 'scale(1.5)';
+                img.style.transition = 'transform 0.3s ease';
+                $(this).html('<i class="fas fa-search-minus"></i> کوچکنمایی');
+            }
+        }
+    });
+
+    // Reset zoom on double click
+    $('#plantImage').on('dblclick', function() {
+        this.style.transform = 'scale(1)';
+        $('#zoomImage').html('<i class="fas fa-search-plus"></i> بزرگنمایی');
+    });
+
+    // ========================================
+    // DOWNLOAD IMAGE
+    // ========================================
+    $('#downloadImage').on('click', function() {
+        const img = document.getElementById('plantImage');
+        if (img) {
+            const link = document.createElement('a');
+            link.download = '{{ object.name }}_{{ object.pk }}.jpg';
+            link.href = img.src;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast('تصویر با موفقیت دانلود شد.', 'success');
+        }
+    });
+
+    // ========================================
+    // FULLSCREEN IMAGE
+    // ========================================
+    $('#fullscreenImage').on('click', function() {
+        const wrapper = document.querySelector('.image-wrapper');
+        if (wrapper) {
+            if (!document.fullscreenElement) {
+                wrapper.requestFullscreen().catch(err => {
+                    showToast('اجازه دسترسی به حالت تمام صفحه داده نشد.', 'warning');
+                });
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+    });
+
+    // Update fullscreen button icon
+    $(document).on('fullscreenchange', function() {
+        const btn = $('#fullscreenImage');
+        if (document.fullscreenElement) {
+            btn.html('<i class="fas fa-compress"></i> خروج از تمام صفحه');
+        } else {
+            btn.html('<i class="fas fa-expand"></i> تمام صفحه');
+        }
+    });
+
+    // ========================================
+    // SHARE PLANT
+    // ========================================
+    $('#sharePlant').on('click', function() {
+        const plantName = '{{ object.name }}';
+        const accuracy = '{{ object.accuracy }}';
+        const healthStatus = '{% if object.healthy %}سالم{% else %}بیمار{% endif %}';
+        
+        const shareData = {
+            title: 'گیاه {{ object.name }}',
+            text: `گیاه ${plantName} با دقت ${accuracy}% تشخیص داده شد. وضعیت: ${healthStatus}`,
+            url: window.location.href
+        };
+
+        if (navigator.share) {
+            navigator.share(shareData)
+                .then(() => {
+                    showToast('با موفقیت به اشتراک گذاشته شد.', 'success');
+                })
+                .catch((err) => {
+                    if (err.name !== 'AbortError') {
+                        showToast('خطا در اشتراک‌گذاری.', 'error');
+                    }
+                });
+        } else {
+            // Fallback: copy to clipboard
+            const text = `گیاه ${plantName} - دقت: ${accuracy}% - وضعیت: ${healthStatus}\n${window.location.href}`;
+            navigator.clipboard.writeText(text)
+                .then(() => {
+                    showToast('لینک در کلیپ‌بورد کپی شد.', 'success');
+                })
+                .catch(() => {
+                    // Fallback for older browsers
+                    const textarea = document.createElement('textarea');
+                    textarea.value = text;
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textarea);
+                    showToast('لینک در کلیپ‌بورد کپی شد.', 'success');
+                });
+        }
+    });
+
+    // ========================================
+    // KEYBOARD SHORTCUTS
+    // ========================================
+    $(document).on('keydown', function(e) {
+        // Escape - close fullscreen
+        if (e.key === 'Escape') {
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
+            }
+        }
+        // Z - zoom toggle
+        if (e.key === 'z' || e.key === 'Z') {
+            if (!e.ctrlKey && !e.metaKey) {
+                e.preventDefault();
+                $('#zoomImage').click();
+            }
+        }
+        // D - download
+        if (e.key === 'd' || e.key === 'D') {
+            if (!e.ctrlKey && !e.metaKey) {
+                e.preventDefault();
+                $('#downloadImage').click();
+            }
+        }
+        // F - fullscreen
+        if (e.key === 'f' || e.key === 'F') {
+            if (!e.ctrlKey && !e.metaKey) {
+                e.preventDefault();
+                $('#fullscreenImage').click();
+            }
+        }
+        // S - share
+        if (e.key === 's' || e.key === 'S') {
+            if (!e.ctrlKey && !e.metaKey) {
+                e.preventDefault();
+                $('#sharePlant').click();
+            }
+        }
+        // Backspace - go back
+        if (e.key === 'Backspace') {
+            // Only if not in input field
+            if (!$(e.target).is('input, textarea')) {
+                e.preventDefault();
+                window.location.href = "{% url 'panel:plant-list' %}";
+            }
+        }
+    });
+
+    // ========================================
+    // PRINT FUNCTIONALITY
+    // ========================================
+    // Add print button to image actions
+    $('.image-actions').append(`
+        <button class="btn-image-action" id="printPage" title="چاپ">
+            <i class="fas fa-print"></i>
+            چاپ
+        </button>
+    `);
+
+    $('#printPage').on('click', function() {
+        window.print();
+    });
+
+    // ========================================
+    // TOAST FUNCTION (if not already defined)
+    // ========================================
+    if (typeof showToast === 'undefined') {
+        window.showToast = function(message, type = 'info', duration = 4000) {
+            const container = document.getElementById('toastContainer') || createToastContainer();
+            
+            const icons = {
+                success: 'fa-check-circle',
+                error: 'fa-times-circle',
+                warning: 'fa-exclamation-triangle',
+                info: 'fa-info-circle'
+            };
+            
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.innerHTML = `
+                <i class="fas ${icons[type] || icons.info} toast-icon"></i>
+                <span class="toast-message">${message}</span>
+                <button class="toast-close">&times;</button>
+            `;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(20px)';
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, duration);
+            
+            toast.querySelector('.toast-close').addEventListener('click', function() {
+                toast.remove();
+            });
+        };
+    }
+
+    function createToastContainer() {
+        const container = document.createElement('div');
+        container.id = 'toastContainer';
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+        return container;
+    }
+
+    // ========================================
+    // LOGGING
+    // ========================================
+    console.log('✅ Plant Detail page initialized');
+    console.log(`📊 Plant: {{ object.name }} (ID: {{ object.pk }})`);
+    console.log(`🎯 Accuracy: {{ object.accuracy }}%`);
+    console.log(`💚 Healthy: {{ object.healthy }}`);
+});
+</script>
+{% endblock %}

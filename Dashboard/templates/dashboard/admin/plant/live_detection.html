@@ -1,0 +1,695 @@
+{% extends 'dashboard/admin/base.html' %}
+{% load static %}
+
+{% block title %}تشخیص زنده گیاهان - هوش مصنوعی{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ========================================
+       LIVE DETECTION - COMPLETE UI
+       ======================================== */
+    
+    .page-header-custom {
+        margin-bottom: 24px;
+    }
+    
+    .page-header-custom .title {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .page-header-custom .title i {
+        color: var(--accent-cyan);
+    }
+    
+    .page-header-custom .subtitle {
+        color: var(--text-secondary);
+        font-size: 14px;
+        margin-top: 4px;
+    }
+    
+    /* ========================================
+       STREAM CONTAINER
+       ======================================== */
+    .stream-container {
+        background: var(--dark-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        overflow: hidden;
+        transition: var(--transition);
+        position: relative;
+    }
+    
+    .stream-container:hover {
+        border-color: var(--primary);
+        box-shadow: var(--shadow-glow);
+    }
+    
+    .stream-wrapper {
+        position: relative;
+        background: var(--dark);
+        padding: 12px;
+        min-height: 400px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .stream-wrapper canvas {
+        width: 100%;
+        max-height: 600px;
+        border-radius: var(--radius-sm);
+        background: var(--dark);
+        display: block;
+    }
+    
+    /* Live indicator */
+    .live-indicator {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 14px;
+        background: rgba(255, 23, 68, 0.9);
+        border-radius: 50px;
+        color: white;
+        font-size: 12px;
+        font-weight: 600;
+        backdrop-filter: blur(10px);
+        z-index: 10;
+        animation: pulse 1.5s ease-in-out infinite;
+    }
+    
+    .live-indicator .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: white;
+        animation: pulse-dot 1s ease-in-out infinite;
+    }
+    
+    @keyframes pulse-dot {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.3; transform: scale(0.8); }
+    }
+    
+    /* Status overlay */
+    .status-overlay {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        z-index: 10;
+    }
+    
+    .stream-status {
+        padding: 6px 16px;
+        border-radius: 50px;
+        font-size: 12px;
+        font-weight: 600;
+        background: rgba(13, 17, 23, 0.85);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--border-color);
+        color: var(--text-secondary);
+        transition: var(--transition);
+    }
+    
+    .stream-status.online {
+        border-color: var(--success);
+        color: var(--success);
+    }
+    
+    .stream-status.offline {
+        border-color: var(--danger);
+        color: var(--danger);
+    }
+    
+    .stream-status.warning {
+        border-color: var(--warning);
+        color: var(--warning);
+    }
+    
+    .stream-status.error {
+        border-color: var(--danger);
+        color: var(--danger);
+        animation: blink-red 1s ease-in-out infinite;
+    }
+    
+    .fps-display {
+        padding: 4px 12px;
+        border-radius: 50px;
+        font-size: 11px;
+        background: rgba(13, 17, 23, 0.85);
+        backdrop-filter: blur(10px);
+        color: var(--text-secondary);
+        border: 1px solid var(--border-color);
+        text-align: center;
+        font-variant-numeric: tabular-nums;
+    }
+    
+    /* ========================================
+       DETECTION INFO BAR
+       ======================================== */
+    .detection-info-bar {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+        gap: 0;
+        background: var(--dark);
+        border-top: 1px solid var(--border-color);
+        padding: 16px 20px;
+    }
+    
+    .detection-info-item {
+        text-align: center;
+        padding: 0 12px;
+        border-right: 1px solid var(--border-color);
+    }
+    
+    .detection-info-item:last-child {
+        border-right: none;
+    }
+    
+    .detection-info-item .label {
+        font-size: 10px;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+    }
+    
+    .detection-info-item .value {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-top: 4px;
+        transition: var(--transition);
+    }
+    
+    .detection-info-item .value.success {
+        color: var(--success);
+    }
+    
+    .detection-info-item .value.danger {
+        color: var(--danger);
+    }
+    
+    .detection-info-item .value.warning {
+        color: var(--warning);
+    }
+    
+    .detection-info-item .value.primary {
+        color: var(--primary);
+    }
+    
+    /* ========================================
+       CONTROLS BAR
+       ======================================== */
+    .controls-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 14px 20px;
+        background: var(--dark-card2);
+        border-top: 1px solid var(--border-color);
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+    
+    .controls-group {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    
+    .btn-control {
+        padding: 8px 18px;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        background: transparent;
+        color: var(--text-secondary);
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: var(--transition);
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+    }
+    
+    .btn-control:hover {
+        border-color: var(--primary);
+        color: var(--text-primary);
+        background: rgba(108, 60, 225, 0.05);
+    }
+    
+    .btn-control:active {
+        transform: scale(0.96);
+    }
+    
+    .btn-control.primary {
+        background: var(--gradient-primary);
+        border-color: var(--primary);
+        color: white;
+    }
+    
+    .btn-control.primary:hover {
+        box-shadow: var(--shadow-glow);
+        border-color: var(--primary-light);
+    }
+    
+    .btn-control.danger {
+        border-color: var(--danger);
+        color: var(--danger);
+    }
+    
+    .btn-control.danger:hover {
+        background: rgba(255, 23, 68, 0.1);
+    }
+    
+    .btn-control.success {
+        border-color: var(--success);
+        color: var(--success);
+    }
+    
+    .btn-control.success:hover {
+        background: rgba(0, 230, 118, 0.1);
+    }
+    
+    .btn-control i {
+        font-size: 14px;
+    }
+    
+    .btn-control:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    /* ========================================
+       DETECTION STATS
+       ======================================== */
+    .detection-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 12px;
+        padding: 12px 20px;
+        background: var(--dark);
+        border-top: 1px solid var(--border-color);
+    }
+    
+    .stat-item {
+        text-align: center;
+        padding: 8px;
+        background: var(--dark-card);
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border-color);
+        transition: var(--transition);
+    }
+    
+    .stat-item:hover {
+        border-color: var(--primary);
+    }
+    
+    .stat-item .stat-label {
+        font-size: 10px;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: block;
+    }
+    
+    .stat-item .stat-value {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--text-primary);
+        display: block;
+        margin-top: 2px;
+    }
+    
+    .stat-item .stat-value.danger {
+        color: var(--danger);
+    }
+    
+    .stat-item .stat-value.success {
+        color: var(--success);
+    }
+    
+    .stat-item .stat-value.warning {
+        color: var(--warning);
+    }
+    
+    .stat-item .stat-value.primary {
+        color: var(--primary);
+    }
+    
+    /* ========================================
+       SHORTCUTS HELP
+       ======================================== */
+    .shortcuts-help {
+        padding: 8px 20px 12px;
+        background: var(--dark-card2);
+        border-top: 1px solid var(--border-color);
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .shortcuts-help kbd {
+        padding: 2px 10px;
+        background: var(--dark);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        font-size: 11px;
+        font-family: inherit;
+        color: var(--text-secondary);
+    }
+    
+    .shortcuts-help span {
+        font-size: 11px;
+        color: var(--text-dim);
+    }
+    
+    /* ========================================
+       RESPONSIVE
+       ======================================== */
+    @media (max-width: 992px) {
+        .detection-info-bar {
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        
+        .detection-info-item {
+            border-right: none;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+        }
+        
+        .detection-info-item:last-child {
+            border-bottom: none;
+        }
+        
+        .detection-stats {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .controls-bar {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .controls-group {
+            justify-content: center;
+        }
+        
+        .btn-control {
+            flex: 1;
+            justify-content: center;
+        }
+        
+        .status-overlay {
+            top: 12px;
+            right: 12px;
+        }
+        
+        .live-indicator {
+            top: 12px;
+            left: 12px;
+            font-size: 10px;
+            padding: 4px 12px;
+        }
+        
+        .detection-info-item .value {
+            font-size: 16px;
+        }
+        
+        .shortcuts-help {
+            display: none;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .detection-info-bar {
+            grid-template-columns: 1fr 1fr;
+            padding: 12px 14px;
+        }
+        
+        .detection-stats {
+            grid-template-columns: 1fr 1fr;
+            padding: 10px 14px;
+        }
+        
+        .stream-wrapper {
+            padding: 6px;
+            min-height: 250px;
+        }
+        
+        .controls-bar {
+            padding: 10px 14px;
+        }
+        
+        .btn-control {
+            font-size: 12px;
+            padding: 6px 14px;
+        }
+    }
+    
+    /* ========================================
+       ANIMATIONS
+       ======================================== */
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+    
+    @keyframes blink-red {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.4; }
+    }
+    
+    .stream-container {
+        animation: fadeIn 0.4s ease both;
+    }
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block main %}
+<!-- ========================================
+   PAGE HEADER
+   ======================================== -->
+<div class="page-header-custom">
+    <div class="title">
+        <i class="fas fa-video"></i>
+        تشخیص زنده گیاهان
+        <span class="badge" style="background:var(--danger);color:white;font-size:12px;padding:2px 12px;">
+            ● Live
+        </span>
+    </div>
+    <div class="subtitle">
+        شناسایی لحظه‌ای نوع گیاه و مشکلات آن با استفاده از هوش مصنوعی
+    </div>
+</div>
+
+<!-- ========================================
+   STREAM CONTAINER
+   ======================================== -->
+<div class="stream-container">
+    <!-- Stream Wrapper -->
+    <div class="stream-wrapper">
+        <!-- Canvas for video rendering -->
+        <canvas id="videoCanvas"></canvas>
+        
+        <!-- Live Indicator -->
+        <div class="live-indicator" id="liveIndicator">
+            <span class="dot"></span>
+            LIVE
+        </div>
+        
+        <!-- Status Overlay -->
+        <div class="status-overlay">
+            <span class="stream-status" id="streamStatus">🔴 در حال اتصال...</span>
+            <span class="fps-display" id="fpsDisplay">0 FPS</span>
+        </div>
+    </div>
+    
+    <!-- Detection Info Bar -->
+    <div class="detection-info-bar">
+        <div class="detection-info-item">
+            <div class="label">🌿 گیاه</div>
+            <div class="value success" id="plantName">--</div>
+        </div>
+        <div class="detection-info-item">
+            <div class="label">⚠️ مشکل</div>
+            <div class="value danger" id="plantProblem">--</div>
+        </div>
+        <div class="detection-info-item">
+            <div class="label">🎯 دقت</div>
+            <div class="value primary" id="plantAccuracy">--</div>
+        </div>
+        <div class="detection-info-item">
+            <div class="label">🕒 زمان</div>
+            <div class="value" id="detectionTime">--</div>
+        </div>
+    </div>
+    
+    <!-- Detection Stats -->
+    <div class="detection-stats" id="detectionStats">
+        <div class="stat-item">
+            <span class="stat-label">تشخیص‌ها</span>
+            <span class="stat-value" id="statCount">0</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">گونه‌ها</span>
+            <span class="stat-value" id="statSpecies">0</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">میانگین دقت</span>
+            <span class="stat-value primary" id="statAccuracy">0%</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">مشکلات</span>
+            <span class="stat-value success" id="statProblems">0</span>
+        </div>
+    </div>
+    
+    <!-- Controls Bar -->
+    <div class="controls-bar">
+        <div class="controls-group">
+            <button class="btn-control primary" id="startStreamBtn">
+                <i class="fas fa-play"></i> شروع
+            </button>
+            <button class="btn-control danger" id="stopStreamBtn">
+                <i class="fas fa-stop"></i> توقف
+            </button>
+        </div>
+        <div class="controls-group">
+            <button class="btn-control" id="screenshotBtn">
+                <i class="fas fa-camera"></i> عکس
+            </button>
+            <button class="btn-control" id="saveDetectionBtn">
+                <i class="fas fa-save"></i> ذخیره
+            </button>
+            <button class="btn-control" id="fullscreenBtn">
+                <i class="fas fa-expand"></i> تمام صفحه
+            </button>
+        </div>
+    </div>
+    
+    <!-- Shortcuts Help -->
+    <div class="shortcuts-help">
+        <span><kbd>Space</kbd> شروع/توقف</span>
+        <span><kbd>S</kbd> عکس</span>
+        <span><kbd>F</kbd> تمام صفحه</span>
+        <span><kbd>Ctrl+S</kbd> ذخیره تشخیص</span>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- ========================================
+   SCRIPTS
+   ======================================== -->
+<script src="{% static 'dashboard/js/live_detection.js' %}"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Additional functionality for save detection
+    document.getElementById('saveDetectionBtn').addEventListener('click', async function() {
+        const name = document.getElementById('plantName').textContent;
+        const problem = document.getElementById('plantProblem').textContent;
+        const accuracy = document.getElementById('plantAccuracy').textContent;
+        const canvas = document.getElementById('videoCanvas');
+        
+        if (name === '--' || !canvas) {
+            showToast('هنوز تشخیصی انجام نشده است!', 'warning');
+            return;
+        }
+        
+        try {
+            // Get base64 image from canvas
+            const imageData = canvas.toDataURL('image/jpeg').split(',')[1];
+            
+            const response = await fetch('/api/save-detection/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+                },
+                body: JSON.stringify({
+                    name: name,
+                    problem: problem,
+                    accuracy: parseFloat(accuracy) || 0,
+                    image: imageData
+                })
+            });
+            
+            const data = await response.json();
+            if (data.success) {
+                showToast('✅ تشخیص با موفقیت ذخیره شد', 'success');
+            } else {
+                showToast('❌ خطا در ذخیره تشخیص', 'error');
+            }
+        } catch (error) {
+            console.error('Error saving detection:', error);
+            showToast('❌ خطا در ارتباط با سرور', 'error');
+        }
+    });
+    
+    // Initialize the stream manager
+    const streamManager = new LiveDetectionManager({
+        frameInterval: 150,
+        maxRetries: 3,
+        retryDelay: 2000,
+        autoStart: true
+    });
+    
+    // Expose to window
+    window.streamManager = streamManager;
+    
+    // Update stats periodically
+    setInterval(() => {
+        const stats = document.getElementById('detectionStats');
+        if (stats && streamManager.detectionHistory.length > 0) {
+            const history = streamManager.detectionHistory;
+            const unique = new Set(history.map(d => d.name));
+            const avgAcc = history.reduce((s, d) => s + (d.accuracy || 0), 0) / history.length;
+            const problems = history.filter(d => 
+                d.problem && !d.problem.toLowerCase().includes('no problem')
+            ).length;
+            
+            document.getElementById('statCount').textContent = history.length;
+            document.getElementById('statSpecies').textContent = unique.size;
+            document.getElementById('statAccuracy').textContent = avgAcc.toFixed(1) + '%';
+            document.getElementById('statProblems').textContent = problems;
+            document.getElementById('statProblems').className = 'stat-value ' + 
+                (problems > 0 ? 'danger' : 'success');
+        }
+    }, 1000);
+    
+    console.log('✅ Live Detection page loaded');
+    console.log('📸 Press SPACE to start/stop, S for screenshot, F for fullscreen');
+});
+</script>
+{% endblock %}

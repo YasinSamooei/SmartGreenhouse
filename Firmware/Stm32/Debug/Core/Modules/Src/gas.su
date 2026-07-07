@@ -1,0 +1,6 @@
+../Core/Modules/Src/gas.c:4:6:Gas_Init	16	static
+../Core/Modules/Src/gas.c:9:10:Gas_ReadAnalog	16	static
+../Core/Modules/Src/gas.c:14:9:Gas_ReadDigital	16	static
+../Core/Modules/Src/gas.c:19:6:Gas_ReadAll	24	static
+../Core/Modules/Src/gas.c:31:9:Gas_GetPercent	16	static
+../Core/Modules/Src/gas.c:36:9:Gas_IsDanger	16	static

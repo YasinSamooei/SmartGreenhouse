@@ -1,0 +1,1073 @@
+{% extends 'dashboard/admin/base.html' %}
+{% load static %}
+
+{% block title %}داشبورد اصلی - سیستم مدیریت هوشمند گلخانه{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ========================================
+       HOME PAGE SPECIFIC STYLES
+       ======================================== */
+    
+    /* Hero Section */
+    .hero-section {
+        background: var(--dark-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 40px 48px;
+        margin-bottom: 32px;
+        position: relative;
+        overflow: hidden;
+        transition: var(--transition);
+    }
+
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -20%;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(108, 60, 225, 0.1) 0%, transparent 70%);
+        border-radius: 50%;
+        pointer-events: none;
+    }
+
+    .hero-section::after {
+        content: '';
+        position: absolute;
+        bottom: -30%;
+        left: -10%;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(0, 230, 118, 0.08) 0%, transparent 70%);
+        border-radius: 50%;
+        pointer-events: none;
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 24px;
+    }
+
+    .hero-text {
+        flex: 1;
+        min-width: 280px;
+    }
+
+    .hero-text .badge-greeting {
+        display: inline-block;
+        padding: 4px 16px;
+        background: rgba(108, 60, 225, 0.15);
+        border: 1px solid rgba(108, 60, 225, 0.3);
+        border-radius: 50px;
+        font-size: 12px;
+        color: var(--primary-light);
+        margin-bottom: 12px;
+    }
+
+    .hero-text h1 {
+        font-size: 32px;
+        font-weight: 800;
+        color: var(--text-primary);
+        line-height: 1.3;
+        margin-bottom: 12px;
+    }
+
+    .hero-text h1 .highlight {
+        background: var(--gradient-primary);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .hero-text p {
+        font-size: 16px;
+        color: var(--text-secondary);
+        line-height: 1.8;
+        max-width: 600px;
+    }
+
+    .hero-stats {
+        display: flex;
+        gap: 32px;
+        margin-top: 20px;
+        flex-wrap: wrap;
+    }
+
+    .hero-stat {
+        text-align: center;
+    }
+
+    .hero-stat .number {
+        font-size: 28px;
+        font-weight: 800;
+        color: var(--accent-cyan);
+        display: block;
+    }
+
+    .hero-stat .label {
+        font-size: 12px;
+        color: var(--text-secondary);
+    }
+
+    .hero-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        border: 3px solid var(--primary);
+        object-fit: cover;
+        box-shadow: var(--shadow-glow);
+        flex-shrink: 0;
+    }
+
+    .hero-avatar-wrapper {
+        position: relative;
+    }
+
+    .hero-avatar-wrapper .status-dot {
+        position: absolute;
+        bottom: 4px;
+        right: 4px;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--success);
+        border: 2px solid var(--dark-card);
+        animation: pulse-dot 1.5s ease-in-out infinite;
+    }
+
+    /* ========================================
+       STATS CARDS
+       ======================================== */
+    .stats-grid-home {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-bottom: 32px;
+    }
+
+    .stat-card-home {
+        background: var(--dark-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 20px 24px;
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+        cursor: default;
+    }
+
+    .stat-card-home::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--gradient-primary);
+    }
+
+    .stat-card-home:hover {
+        transform: translateY(-4px);
+        border-color: var(--primary);
+        box-shadow: var(--shadow-glow);
+    }
+
+    .stat-card-home .stat-icon {
+        font-size: 28px;
+        margin-bottom: 8px;
+    }
+
+    .stat-card-home .stat-number {
+        font-size: 28px;
+        font-weight: 800;
+        color: var(--text-primary);
+    }
+
+    .stat-card-home .stat-label {
+        font-size: 13px;
+        color: var(--text-secondary);
+        margin-top: 2px;
+    }
+
+    .stat-card-home .stat-change {
+        font-size: 12px;
+        margin-top: 6px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 10px;
+        border-radius: 50px;
+    }
+
+    .stat-card-home .stat-change.up {
+        color: var(--success);
+        background: rgba(0, 230, 118, 0.1);
+    }
+
+    .stat-card-home .stat-change.down {
+        color: var(--danger);
+        background: rgba(255, 23, 68, 0.1);
+    }
+
+    /* ========================================
+       FEATURE CARDS (Project Modules)
+       ======================================== */
+    .features-title {
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .features-title i {
+        color: var(--primary);
+    }
+
+    .features-grid-home {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 24px;
+        margin-bottom: 32px;
+    }
+
+    .feature-card-home {
+        background: var(--dark-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        overflow: hidden;
+        transition: var(--transition);
+        position: relative;
+    }
+
+    .feature-card-home:hover {
+        transform: translateY(-6px);
+        border-color: var(--primary);
+        box-shadow: var(--shadow-glow);
+    }
+
+    .feature-card-home .card-image-wrap {
+        position: relative;
+        overflow: hidden;
+        aspect-ratio: 16/9;
+        background: var(--dark);
+    }
+
+    .feature-card-home .card-image-wrap img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: var(--transition-slow);
+    }
+
+    .feature-card-home:hover .card-image-wrap img {
+        transform: scale(1.05);
+    }
+
+    .feature-card-home .card-overlay {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+.feature-card-home .card-overlay .tag {
+    display: inline-flex;
+    align-items: center;
+    text-align: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 50px;
+    font-size: 9px;
+    font-weight: 600;
+    color: white;
+    backdrop-filter: blur(10px);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    width: auto;
+    white-space: nowrap;
+}
+
+    .tag.stm32 { background: rgba(0, 188, 212, 0.85); }
+    .tag.ai { background: rgba(108, 60, 225, 0.85); }
+    .tag-live { background: rgba(255, 23, 68, 0.85); animation: pulse 1.5s ease-in-out infinite; }
+
+    .feature-card-home .card-body {
+        padding: 20px 24px 24px;
+    }
+
+    .feature-card-home .card-body h4 {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 8px;
+    }
+
+    .feature-card-home .card-body p {
+        font-size: 14px;
+        color: var(--text-secondary);
+        line-height: 1.7;
+        margin-bottom: 14px;
+    }
+
+    .feature-card-home .card-body .tech-stack {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 16px;
+    }
+
+    .feature-card-home .card-body .tech-stack span {
+        padding: 2px 12px;
+        border-radius: 50px;
+        font-size: 11px;
+        background: var(--dark);
+        border: 1px solid var(--border-color);
+        color: var(--text-secondary);
+        transition: var(--transition);
+    }
+
+    .feature-card-home .card-body .tech-stack span:hover {
+        border-color: var(--primary);
+        color: var(--text-primary);
+    }
+
+    .feature-card-home .card-body .card-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 14px;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .feature-card-home .card-body .card-footer .author {
+        font-size: 13px;
+        color: var(--text-secondary);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .feature-card-home .card-body .card-footer .author i {
+        color: var(--danger);
+    }
+
+    .btn-feature {
+        padding: 8px 20px;
+        border: none;
+        border-radius: var(--radius-sm);
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .btn-feature.primary {
+        background: var(--gradient-primary);
+        color: white;
+    }
+
+    .btn-feature.primary:hover {
+        transform: translateX(-4px);
+        box-shadow: var(--shadow-glow);
+    }
+
+    .btn-feature.outline {
+        background: transparent;
+        border: 1px solid var(--border-color);
+        color: var(--text-secondary);
+    }
+
+    .btn-feature.outline:hover {
+        border-color: var(--primary);
+        color: var(--text-primary);
+    }
+
+    /* ========================================
+       SYSTEM ARCHITECTURE SECTION
+       ======================================== */
+    .architecture-section {
+        background: var(--dark-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 32px 40px;
+        margin-bottom: 32px;
+        transition: var(--transition);
+    }
+
+    .architecture-section:hover {
+        border-color: var(--primary);
+    }
+
+    .architecture-section .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .architecture-section .section-header h3 {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .architecture-section .section-header h3 i {
+        color: var(--accent-cyan);
+    }
+
+    .architecture-flow {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .flow-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        padding: 16px 20px;
+        background: var(--dark);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        min-width: 100px;
+        transition: var(--transition);
+    }
+
+    .flow-item:hover {
+        border-color: var(--primary);
+        transform: translateY(-2px);
+    }
+
+    .flow-item .flow-icon {
+        font-size: 32px;
+    }
+
+    .flow-item .flow-label {
+        font-size: 12px;
+        color: var(--text-secondary);
+        text-align: center;
+    }
+
+    .flow-item .flow-detail {
+        font-size: 10px;
+        color: var(--text-dim);
+        text-align: center;
+    }
+
+    .flow-arrow {
+        font-size: 24px;
+        color: var(--text-dim);
+        flex-shrink: 0;
+    }
+
+    /* ========================================
+   TAG LIVE STYLE
+   ======================================== */
+.tag-live {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    background: #ff1744;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 50px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    animation: pulse-live 1.5s ease-in-out infinite;
+    width: auto;
+    white-space: nowrap;
+    box-shadow: 0 0 20px rgba(255, 23, 68, 0.4);
+}
+
+.tag-live .dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: #ffffff;
+    border-radius: 50%;
+    animation: dot-blink 1s ease-in-out infinite;
+}
+
+@keyframes pulse-live {
+    0%, 100% {
+        opacity: 1;
+        box-shadow: 0 0 20px rgba(255, 23, 68, 0.4);
+    }
+    50% {
+        opacity: 0.8;
+        box-shadow: 0 0 40px rgba(255, 23, 68, 0.6);
+    }
+}
+
+@keyframes dot-blink {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.3;
+        transform: scale(0.8);
+    }
+}
+
+
+    /* ========================================
+       RESPONSIVE
+       ======================================== */
+    @media (max-width: 992px) {
+        .hero-section {
+            padding: 28px 24px;
+        }
+
+        .hero-text h1 {
+            font-size: 26px;
+        }
+
+        .features-grid-home {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .architecture-flow {
+            gap: 8px;
+        }
+
+        .flow-item {
+            min-width: 80px;
+            padding: 12px 14px;
+        }
+
+        .flow-arrow {
+            font-size: 18px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .hero-section {
+            padding: 20px 16px;
+        }
+
+        .hero-content {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .hero-text p {
+            max-width: 100%;
+        }
+
+        .hero-stats {
+            justify-content: center;
+        }
+
+        .hero-avatar {
+            width: 64px;
+            height: 64px;
+        }
+
+        .stats-grid-home {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .features-grid-home {
+            grid-template-columns: 1fr;
+        }
+
+        .architecture-flow {
+            flex-direction: column;
+        }
+
+        .flow-arrow {
+            transform: rotate(90deg);
+        }
+
+        .architecture-section {
+            padding: 20px 16px;
+        }
+
+        .architecture-section .section-header {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .feature-card-home .card-body .card-footer {
+            flex-direction: column;
+            gap: 12px;
+            align-items: stretch;
+            text-align: center;
+        }
+
+        .btn-feature {
+            justify-content: center;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .stats-grid-home {
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .stat-card-home {
+            padding: 14px 16px;
+        }
+
+        .stat-card-home .stat-number {
+            font-size: 22px;
+        }
+
+        .hero-text h1 {
+            font-size: 22px;
+        }
+
+        .hero-stat .number {
+            font-size: 22px;
+        }
+    }
+
+    /* ========================================
+       ANIMATIONS
+       ======================================== */
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+
+    .feature-card-home {
+        animation: fadeInUp 0.4s ease both;
+    }
+
+    .feature-card-home:nth-child(1) { animation-delay: 0.1s; }
+    .feature-card-home:nth-child(2) { animation-delay: 0.2s; }
+    .feature-card-home:nth-child(3) { animation-delay: 0.3s; }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* ========================================
+       GLOW EFFECT FOR CARDS
+       ======================================== */
+    .feature-card-home:nth-child(1) .card-image-wrap {
+        border-bottom: 3px solid var(--primary);
+    }
+
+    .feature-card-home:nth-child(2) .card-image-wrap {
+        border-bottom: 3px solid var(--primary);
+    }
+
+    .feature-card-home:nth-child(3) .card-image-wrap {
+        border-bottom: 3px solid var(--primary);
+    }
+</style>
+{% endblock %}
+
+{% block main %}
+<!-- ========================================
+   HERO SECTION
+   ======================================== -->
+<div class="hero-section">
+    <div class="hero-content">
+        <div class="hero-text">
+            <span class="badge-greeting">
+                <i class="fas fa-leaf"></i>
+                به پنل مدیریت خوش آمدید
+            </span>
+            <h1>
+                سیستم هوشمند <br>
+                <span class="highlight">مدیریت و پایش گلخانه</span>
+            </h1>
+            <p>
+                این سیستم با ترکیب <strong>سخت‌افزار STM32F103C8</strong>، 
+                <strong>Raspberry Pi Pico W</strong> و <strong>هوش مصنوعی</strong>، 
+                گلخانه شما را به طور کامل هوشمندسازی کرده و امکان تشخیص 
+                نوع گیاهان و مشکلات آن‌ها را فراهم می‌کند.
+            </p>
+            <div class="hero-stats">
+                <div class="hero-stat">
+                    <span class="number" id="liveSensors">--</span>
+                    <span class="label">سنسور فعال</span>
+                </div>
+                <div class="hero-stat">
+                    <span class="number" id="plantsDetected">--</span>
+                    <span class="label">گیاه شناسایی شده</span>
+                </div>
+                <div class="hero-stat">
+                    <span class="number" id="systemUptime">--</span>
+                    <span class="label">زمان فعالیت</span>
+                </div>
+            </div>
+        </div>
+        <div class="hero-avatar-wrapper">
+            <img src="{% static 'dashboard/images/avatar.png' %}" alt="Yasin Samooei" class="hero-avatar">
+            <div class="status-dot"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================
+   STATS CARDS
+   ======================================== -->
+<div class="stats-grid-home">
+    <div class="stat-card-home">
+        <div class="stat-icon">🌡️</div>
+        <div class="stat-number" id="statTemp">--</div>
+        <div class="stat-label">دمای فعلی</div>
+        <div class="stat-change up" id="statTempChange">▲ 0.0°C</div>
+    </div>
+    <div class="stat-card-home">
+        <div class="stat-icon">💧</div>
+        <div class="stat-number" id="statHum">--</div>
+        <div class="stat-label">رطوبت هوا</div>
+        <div class="stat-change up" id="statHumChange">▲ 0.0%</div>
+    </div>
+    <div class="stat-card-home">
+        <div class="stat-icon">🌱</div>
+        <div class="stat-number" id="statSoil">--</div>
+        <div class="stat-label">رطوبت خاک</div>
+        <div class="stat-change down" id="statSoilChange">▼ 0.0%</div>
+    </div>
+    <div class="stat-card-home">
+        <div class="stat-icon">🖥️</div>
+        <div class="stat-number" id="statPlants">--</div>
+        <div class="stat-label">گیاهان شناسایی شده</div>
+        <div class="stat-change up">▲ جدید</div>
+    </div>
+</div>
+
+
+<!-- ========================================
+   PROJECT MODULES (FEATURES)
+   ======================================== -->
+<div class="features-title">
+    <i class="fas fa-microchip"></i>
+    ماژول‌های پروژه
+</div>
+
+<div class="features-grid-home">
+    <!-- Card 1: STM32 + Sensors -->
+    <div class="feature-card-home">
+        <div class="card-image-wrap">
+            <img src="{% static 'dashboard/images/stm32-sensors.png' %}" 
+                 alt="STM32 Sensors" 
+                 >
+            <div class="card-overlay">
+                <span class="tag stm32">STM32F103C8</span>
+                <span class="tag-live">
+    <span class="dot"></span>
+    Live
+</span>
+            </div>
+        </div>
+        <div class="card-body">
+            <h4>پایش و کنترل سخت‌افزاری</h4>
+            <p>
+                میکروکنترلر STM32F103C8 با مدیریت سنسورهای دما، رطوبت، 
+                MQ9 (گاز دیجیتال و آنالوگ)، LDR و رطوبت خاک، عملگرهایی 
+                مانند پمپ آب، فن، گرمایش، نور مصنوعی و هشدار را کنترل می‌کند.
+            </p>
+            <div class="tech-stack">
+                <span>🟢 STM32F103C8</span>
+                <span>🌡️ DHT22</span>
+                <span>💨 MQ-9</span>
+                <span>☀️ LDR</span>
+            </div>
+            <div class="card-footer">
+                <span class="author">
+                    <i class="fas fa-user"></i>
+                    یاسین سموعی
+                </span>
+                <a href="{% url 'embedded:display-sensors-page' %}" class="btn-feature primary">
+                    مشاهده <i class="fas fa-arrow-left"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card 2: AI Plant Detection -->
+    <div class="feature-card-home">
+        <div class="card-image-wrap">
+            <img src="{% static 'dashboard/images/ai-plant-detection.png' %}" 
+                 alt="AI Plant Detection" 
+                 onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22180%22%3E%3Crect fill=%22%230d1117%22 width=%22320%22 height=%22180%22/%3E%3Ctext x=%2250%%22 y=%2250%%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%2378909c%22 font-family=%22Vazirmatn%22 font-size=%2216%22%3E🤖 AI Detection%3C/text%3E%3C/svg%3E'">
+            <div class="card-overlay">
+                <span class="tag ai">Deep Learning</span>
+                <span class="tag stm32">PyTorch</span>
+            </div>
+        </div>
+        <div class="card-body">
+            <h4>تشخیص نوع و مشکلات گیاهان</h4>
+            <p>
+                با استفاده از مدل‌های Deep Learning و PyTorch، 
+                نوع گیاه را شناسایی کرده و وجود آفت یا بیماری را 
+                با دقت بالا تشخیص می‌دهد. تمام اطلاعات در دیتابیس ذخیره می‌شود.
+            </p>
+            <div class="tech-stack">
+                <span>🧠 PyTorch</span>
+                <span>📷 OpenCV</span>
+                <span>🌿 CNN</span>
+                <span>📊 Django</span>
+            </div>
+            <div class="card-footer">
+                <span class="author">
+                    <i class="fas fa-user"></i>
+                    یاسین سموعی
+                </span>
+                <a href="{% url 'panel:plant-list' %}" class="btn-feature primary">
+                    مشاهده <i class="fas fa-arrow-left"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card 3: Live Detection -->
+    <div class="feature-card-home">
+        <div class="card-image-wrap">
+            <img src="{% static 'dashboard/images/live-detection.png' %}" 
+                 alt="Live Detection" 
+                 onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22180%22%3E%3Crect fill=%22%230d1117%22 width=%22320%22 height=%22180%22/%3E%3Ctext x=%2250%%22 y=%2250%%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%2378909c%22 font-family=%22Vazirmatn%22 font-size=%2216%22%3E📹 Live Detection%3C/text%3E%3C/svg%3E'">
+            <div class="card-overlay">
+                <span class="tag-live">
+    <span class="dot"></span>
+    Live
+</span>
+            </div>
+        </div>
+        <div class="card-body">
+            <h4>تشخیص زنده (Live Detection)</h4>
+            <p>
+                دوربین به صورت لحظه‌ای روی گیاهان متمرکز شده و با 
+                استفاده از مدل‌های آموزش‌دیده، نوع گیاه و مشکلات آن را 
+                در زمان واقعی تشخیص داده و نمایش می‌دهد.
+            </p>
+            <div class="tech-stack">
+                <span>📹 OpenCV</span>
+                <span>🧠 PyTorch</span>
+                <span>🌿 CNN</span>
+                <span>🔄 WebSocket</span>
+            </div>
+            <div class="card-footer">
+                <span class="author">
+                    <i class="fas fa-user"></i>
+                    یاسین سموعی
+                </span>
+                <a href="{% url 'plant:video_stream' %}" class="btn-feature primary">
+                    مشاهده <i class="fas fa-arrow-left"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================
+   SYSTEM ARCHITECTURE
+   ======================================== -->
+<div class="architecture-section">
+    <div class="section-header">
+        <h3>
+            <i class="fas fa-sitemap"></i>
+            معماری سیستم
+        </h3>
+        <span style="font-size:12px;color:var(--text-secondary);">
+            <i class="fas fa-check-circle" style="color:var(--success);"></i>
+            تمامی ماژول‌ها به هم متصل هستند
+        </span>
+    </div>
+
+    <div class="architecture-flow">
+        <!-- STM32 -->
+        <div class="flow-item">
+            <div class="flow-icon">🔬</div>
+            <div class="flow-label">STM32F103C8</div>
+            <div class="flow-detail">سنسورها + عملگرها</div>
+        </div>
+
+        <div class="flow-arrow">
+            <i class="fas fa-arrow-left"></i>
+        </div>
+
+        <!-- UART -->
+        <div class="flow-item">
+            <div class="flow-icon">📡</div>
+            <div class="flow-label">UART</div>
+            <div class="flow-detail">ارسال داده</div>
+        </div>
+
+        <div class="flow-arrow">
+            <i class="fas fa-arrow-left"></i>
+        </div>
+
+        <!-- Raspberry Pi Pico W -->
+        <div class="flow-item" style="border-color:var(--accent-cyan);">
+            <div class="flow-icon">🖥️</div>
+            <div class="flow-label" style="color:var(--accent-cyan);">Raspberry Pi Pico W</div>
+            <div class="flow-detail">پردازش + WiFi</div>
+        </div>
+
+        <div class="flow-arrow">
+            <i class="fas fa-arrow-left"></i>
+        </div>
+
+        <!-- Django Backend -->
+        <div class="flow-item" style="border-color:var(--primary);">
+            <div class="flow-icon">⚙️</div>
+            <div class="flow-label" style="color:var(--primary);">Django Backend</div>
+            <div class="flow-detail">API + Database</div>
+        </div>
+
+        <div class="flow-arrow">
+            <i class="fas fa-arrow-left"></i>
+        </div>
+
+        <!-- Dashboard -->
+        <div class="flow-item" style="border-color:var(--success);">
+            <div class="flow-icon">📊</div>
+            <div class="flow-label" style="color:var(--success);">Dashboard</div>
+            <div class="flow-detail">نمایش + کنترل</div>
+        </div>
+    </div>
+
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border-color);display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--text-secondary);">
+        <span>
+            <i class="fas fa-microchip" style="color:var(--accent-cyan);"></i>
+            STM32 مدیریت سنسورها و عملگرها
+        </span>
+        <span>
+            <i class="fas fa-wifi" style="color:var(--accent-green);"></i>
+            انتقال داده از طریق WiFi
+        </span>
+        <span>
+            <i class="fas fa-database" style="color:var(--primary);"></i>
+            ذخیره‌سازی در دیتابیس PostgreSQL
+        </span>
+        <span>
+            <i class="fas fa-brain" style="color:var(--accent-purple);"></i>
+            پردازش با PyTorch و OpenCV
+        </span>
+    </div>
+</div>
+
+<!-- ========================================
+   FOOTER (From base.html)
+   ======================================== -->
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ========================================
+// HOME PAGE DASHBOARD
+// ========================================
+
+// Update live stats from sensor data
+function updateHomeStats() {
+    fetch('{% url "embedded:get_sensor_data" %}')
+        .then(response => response.json())
+        .then(data => {
+            // Temperature
+            document.getElementById('statTemp').textContent = data.temperature?.toFixed(1) || '--';
+            document.getElementById('statHum').textContent = data.humidity?.toFixed(1) || '--';
+            document.getElementById('statSoil').textContent = data.soil || '--';
+            
+            // Update changes (simulated)
+            const tempChange = document.getElementById('statTempChange');
+            const humChange = document.getElementById('statHumChange');
+            const soilChange = document.getElementById('statSoilChange');
+            
+            // Random changes for demo
+            const tChange = (Math.random() * 0.6 - 0.3);
+            const hChange = (Math.random() * 1.2 - 0.6);
+            const sChange = (Math.random() * 2 - 1);
+            
+            tempChange.textContent = (tChange > 0 ? '▲' : '▼') + ' ' + Math.abs(tChange).toFixed(1) + '°C';
+            tempChange.className = 'stat-change ' + (tChange > 0 ? 'up' : 'down');
+            
+            humChange.textContent = (hChange > 0 ? '▲' : '▼') + ' ' + Math.abs(hChange).toFixed(1) + '%';
+            humChange.className = 'stat-change ' + (hChange > 0 ? 'up' : 'down');
+            
+            soilChange.textContent = (sChange > 0 ? '▲' : '▼') + ' ' + Math.abs(sChange).toFixed(1) + '%';
+            soilChange.className = 'stat-change ' + (sChange > 0 ? 'up' : 'down');
+            
+            // Live sensors count
+            const sensors = ['temperature', 'humidity', 'soil', 'gas', 'ldr'];
+            const activeSensors = sensors.filter(s => data[s] !== undefined && data[s] !== null).length;
+            document.getElementById('liveSensors').textContent = activeSensors + '/5';
+            
+            // Plants detected (from another API or static)
+            fetch('{% url "plant:plant-count" %}')
+                .then(res => res.json())
+                .then(plantData => {
+                    document.getElementById('statPlants').textContent = plantData.count || 0;
+                    document.getElementById('plantsDetected').textContent = plantData.count || 0;
+                })
+                .catch(() => {
+                    document.getElementById('statPlants').textContent = '--';
+                    document.getElementById('plantsDetected').textContent = '--';
+                });
+        })
+        .catch(error => {
+            console.error('Error fetching sensor data:', error);
+        });
+}
+
+// Update system uptime
+function updateUptime() {
+    const startTime = new Date();
+    // You can fetch actual uptime from server
+    setInterval(() => {
+        const now = new Date();
+        const diff = Math.floor((now - startTime) / 1000);
+        const hours = String(Math.floor(diff / 3600)).padStart(2, '0');
+        const minutes = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
+        const seconds = String(diff % 60).padStart(2, '0');
+        document.getElementById('systemUptime').textContent = hours + ':' + minutes + ':' + seconds;
+    }, 1000);
+}
+
+// ========================================
+// INIT
+// ========================================
+document.addEventListener('DOMContentLoaded', function() {
+    updateHomeStats();
+    updateUptime();
+    
+    // Update stats every 10 seconds
+    setInterval(updateHomeStats, 10000);
+    
+    console.log('✅ Home Dashboard initialized');
+    console.log('👨‍💻 Developed by Yasin Samooei');
+});
+</script>
+{% endblock %}
